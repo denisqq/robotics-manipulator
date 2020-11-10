@@ -15,3 +15,6 @@
 - Denis Tretyakov
 - Egor Gladkih
 - TBD
+
+###Requirements
+- Oracle HotSpot Java 1.8 with JavaFX
