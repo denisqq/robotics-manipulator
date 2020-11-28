@@ -1,15 +1,20 @@
 package ru.psu.model
 
-data class ChainSegment(var id: Int?,
-                        val startPoint: Point,
-                        val endPoint: Point,
+import kotlin.math.abs
+
+data class ChainSegment(val id: Int?,
                         val weight: Double,
+                        val endPoint: Point,
+                        val startPoint: Point,
+                        val maxAngle: Double,
+                        val parent: ChainSegment? = null,
+                        val systemCoordinate: SystemCoordinate,
                         val children: MutableList<ChainSegment> = mutableListOf(),
-                        val segmentType: ChainSegmentType = ChainSegmentType.REGULAR,
-                        var parent: ChainSegment? = null
+                        val segmentType: ChainSegmentType = ChainSegmentType.REGULAR
 ) {
 
-    fun getSegmentLength() {
-        //TODO not implemented yet
+    fun segmentLength(): Double {
+        return abs(endPoint.x - endPoint.y)
     }
+
 }
