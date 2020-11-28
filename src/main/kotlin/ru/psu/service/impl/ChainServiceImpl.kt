@@ -2,12 +2,13 @@ package ru.psu.service.impl
 
 import ru.psu.model.Chain
 import ru.psu.model.ChainSegment
+import ru.psu.model.ChainState
 import ru.psu.service.ChainSegmentService
 import ru.psu.service.ChainService
 
 class ChainServiceImpl : ChainService {
-    private val chain : Chain = Chain()
-    private val chainSegmentService : ChainSegmentService = ChainSegmentServiceImpl();
+    private val chain: Chain = Chain()
+    private val chainSegmentService: ChainSegmentService = ChainSegmentServiceImpl();
 
     override fun getChain(): Chain {
         return chain
@@ -21,8 +22,9 @@ class ChainServiceImpl : ChainService {
     }
 
     override fun addChainSegmentToChain(segment: ChainSegment): Chain {
-        if(chain.rootChainSegment == null) {
-          chain.rootChainSegment = segment;
+        if (chain.chainState == ChainState.NOT_INITIALIZED) {
+            chain.rootChainSegment = segment;
+            chain.chainState = ChainState.INITIALIZED
         } else {
             val latestSegment = chainSegmentService.getLatestSegment()
             latestSegment?.let {

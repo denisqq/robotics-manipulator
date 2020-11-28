@@ -1,8 +1,5 @@
 package ru.psu.model
 
-data class Chain(var rootChainSegment: ChainSegment? = null) {
+data class Chain(var rootChainSegment: ChainSegment? = null, var chainState: ChainState = ChainState.NOT_INITIALIZED) {
 
-//    fun addChainLink(chainSegment: ChainSegment) {
-//
-//    }
 }
