@@ -49,5 +49,13 @@
 - Evegeniya Vyatkina(@VyatkinaEvgenia)
 - Pavel Kiselev(PavelKiselyow2020)
 
+
+###Responsibility
+- Egor Gladkih - отрисовка сегментов и сустовов;
+- Pavel Kiselev - импорт/экспорт;
+- Denis Tretyakov - CRUD элементов системы;
+- Evegeniya Vyatkina - реализация матричной логики;
+
+
 ###Requirements
 - Oracle HotSpot Java 1.8 with JavaFX
