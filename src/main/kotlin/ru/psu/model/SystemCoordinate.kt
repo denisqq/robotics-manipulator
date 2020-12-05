@@ -1,3 +1,5 @@
 package ru.psu.model
 
-data class SystemCoordinate(val angle: Double)
+import ru.psu.model.enums.SystemCoordinateType
+
+data class SystemCoordinate(var angle: Double, val systemCoordinateType: SystemCoordinateType = SystemCoordinateType.RIGHT)

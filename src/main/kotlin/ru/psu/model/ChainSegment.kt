@@ -1,20 +1,31 @@
 package ru.psu.model
 
+import ru.psu.model.enums.ChainElementType
 import kotlin.math.abs
 
-data class ChainSegment(val id: Int?,
-                        val weight: Double,
-                        val endPoint: Point,
-                        val startPoint: Point,
-                        val maxAngle: Double,
-                        val parent: ChainSegment? = null,
-                        val systemCoordinate: SystemCoordinate,
-                        val children: MutableList<ChainSegment> = mutableListOf(),
-                        val segmentType: ChainSegmentType = ChainSegmentType.REGULAR
-) {
+data class ChainSegment(
+    override var id: Long?,
+    override var weight: Double,
+    override val systemCoordinate: SystemCoordinate,
+
+    var endPoint: Point,
+    var startPoint: Point,
+    var hidden: Boolean = false,
+    var ephemeral: Boolean = false,
+    var segmentJoint: SegmentJoint? = null,
+): AbstractChainElement() {
 
     fun segmentLength(): Double {
-        return abs(endPoint.x - endPoint.y)
+        //TODO
+        return abs(endPoint.x - startPoint.x)
     }
+
+    override val elementType: ChainElementType
+        get() = ChainElementType.SEGMENT
+
+//
+//    override fun elementType(): ChainElementType {
+//        return chainElementType;
+//    }
 
 }

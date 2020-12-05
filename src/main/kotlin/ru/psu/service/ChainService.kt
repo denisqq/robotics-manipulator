@@ -1,6 +1,7 @@
 package ru.psu.service
 
 import ru.psu.model.Chain
+import ru.psu.model.ChainElement
 import ru.psu.model.ChainSegment
 import ru.psu.model.Point
 
@@ -9,5 +10,5 @@ interface ChainService {
 
     fun calculateChainCenterMass() : Point
 
-    fun addChainSegmentToChain(segment: ChainSegment): Chain
+    fun createElement(chainElement: ChainElement, rootElement: ChainElement): Chain
 }
