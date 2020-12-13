@@ -8,7 +8,8 @@ import ru.psu.service.ChainService
 import ru.psu.service.impl.ChainServiceImpl
 
 class ChainControllerImpl : ChainController {
-    private val chainService: ChainService = ChainServiceImpl();
+    val chainService: ChainService = ChainServiceImpl.instance;
+
 
     override fun getChain(): Chain {
         return chainService.getChain()

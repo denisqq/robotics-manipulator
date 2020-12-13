@@ -4,6 +4,7 @@ import ru.psu.model.enums.ChainElementType
 
 interface ChainElement {
     var id: Long?
+    var deleted: Boolean
     val elementType: ChainElementType
-    val systemCoordinate: SystemCoordinate
+    var systemCoordinate: SystemCoordinate
 }
