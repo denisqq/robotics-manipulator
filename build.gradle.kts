@@ -1,13 +1,13 @@
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
-
 plugins {
     kotlin("jvm") version "1.4.0"
+    kotlin("kapt") version "1.4.21"
     application
 }
 group = "ru.psu"
 version = "1.0-SNAPSHOT"
 
-val tornadofx_version: String by rootProject
+val tornadofxVersion: String by rootProject
+val mapstructVersion: String by rootProject
 
 repositories {
     mavenCentral()
@@ -19,7 +19,12 @@ application {
 
 dependencies {
     implementation(kotlin("stdlib-jdk8"))
-    implementation("no.tornado:tornadofx:$tornadofx_version")
+    implementation("org.jetbrains.kotlin:kotlin-reflect")
+    implementation("no.tornado:tornadofx:$tornadofxVersion")
+
+    implementation("org.mapstruct:mapstruct:${mapstructVersion}")
+    kapt("org.mapstruct:mapstruct-processor:${mapstructVersion}")
+
     testImplementation(kotlin("test-junit"))
 }
 

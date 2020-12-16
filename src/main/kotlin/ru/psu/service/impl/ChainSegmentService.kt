@@ -1,9 +1,13 @@
 package ru.psu.service.impl
 
+import org.mapstruct.factory.Mappers
 import ru.psu.model.ChainSegment
 import ru.psu.model.SegmentJoint
+import ru.psu.service.mapper.ChainSegmentMapper
 
-class ChainSegmentService private constructor(): AbstractElementService<ChainSegment, SegmentJoint>() {
+class ChainSegmentService private constructor(updateMapper: ChainSegmentMapper): AbstractElementService<ChainSegment, SegmentJoint, ChainSegmentMapper>(
+    updateMapper
+) {
 
     override fun createElement(element: ChainSegment, rootElement: SegmentJoint?): ChainSegment {
         val segment = element.copy(
@@ -16,8 +20,14 @@ class ChainSegmentService private constructor(): AbstractElementService<ChainSeg
         }
         return segment
     }
+
+    override fun delete(element: ChainSegment) {
+        super.delete(element)
+        element.segmentJoint?.removeSegment(element);
+    }
+
     private object HOLDER {
-        val INSTANCE = ChainSegmentService()
+        val INSTANCE = ChainSegmentService(Mappers.getMapper(ChainSegmentMapper::class.java))
     }
 
     companion object {

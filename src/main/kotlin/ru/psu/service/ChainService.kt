@@ -10,5 +10,9 @@ interface ChainService {
 
     fun calculateChainCenterMass() : Point
 
-    fun createElement(chainElement: ChainElement, rootElement: ChainElement): Chain
+    fun deleteElement(chainElement: ChainElement): Chain
+
+    fun updateElement(id: Long, chainElement: ChainElement): Chain
+
+    fun addElement(chainElement: ChainElement, rootElement: ChainElement): Chain
 }

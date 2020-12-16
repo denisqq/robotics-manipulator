@@ -6,7 +6,7 @@ import kotlin.math.abs
 data class ChainSegment(
     override var id: Long?,
     override var weight: Double,
-    override val systemCoordinate: SystemCoordinate,
+    override var systemCoordinate: SystemCoordinate,
 
     var endPoint: Point,
     var startPoint: Point,
