@@ -5,25 +5,39 @@ import ru.psu.model.ChainSegment
 import ru.psu.model.SegmentJoint
 import ru.psu.service.mapper.SegmentJointMapper
 
-class SegmentJointService private constructor(updateMapper: SegmentJointMapper): AbstractElementService<SegmentJoint, ChainSegment, SegmentJointMapper>(
-    updateMapper
-) {
+class SegmentJointService private constructor(updateMapper: SegmentJointMapper) :
+    AbstractElementService<SegmentJoint, ChainSegment, SegmentJointMapper>(
+        updateMapper
+    ) {
 
-    override fun createElement(element: SegmentJoint, rootElement: ChainSegment?): SegmentJoint {
+    override fun createElement(element: SegmentJoint, parentElement: ChainSegment?): SegmentJoint {
         val joint = element.copy(
             id = this.generateId(),
-            parentSegment = rootElement
+            parentSegment = parentElement
         )
         addIndex(joint)
-        rootElement?.let {
-            it.segmentJoint = joint
+        parentElement?.let {
+            it.parentSegmentJoint = joint
         }
         return joint
     }
 
+    override fun update(id: Long, element: SegmentJoint): SegmentJoint {
+        val segmentJoint = super.update(id, element)
+        segmentJoint.childSegments.forEach { chainSegment ->
+            chainSegment.startPoint = segmentJoint.point
+        }
+
+        return segmentJoint
+    }
+
     override fun delete(element: SegmentJoint) {
         super.delete(element)
-        element.parentSegment?.segmentJoint = null
+        element.parentSegment?.parentSegmentJoint = null
+
+        element.childSegments.forEach { chainSegment ->
+            ChainSegmentService.instance.delete(chainSegment)
+        }
     }
 
     private object HOLDER {

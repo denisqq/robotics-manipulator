@@ -9,21 +9,32 @@ class ChainSegmentService private constructor(updateMapper: ChainSegmentMapper):
     updateMapper
 ) {
 
-    override fun createElement(element: ChainSegment, rootElement: SegmentJoint?): ChainSegment {
+    override fun createElement(element: ChainSegment, parentElement: SegmentJoint?): ChainSegment {
         val segment = element.copy(
             id = this.generateId(),
-            segmentJoint = rootElement,
+            parentSegmentJoint = parentElement,
         )
         addIndex(segment)
-        rootElement?.let {
-            rootElement.addSegment(segment)
+        parentElement?.let {
+            parentElement.addSegment(segment)
         }
         return segment
     }
 
+    override fun update(id: Long, element: ChainSegment): ChainSegment {
+        val segment = super.update(id, element)
+        segment.childSegmentJoint?.point = segment.endPoint
+
+        return segment;
+    }
+
     override fun delete(element: ChainSegment) {
         super.delete(element)
-        element.segmentJoint?.removeSegment(element);
+        element.parentSegmentJoint?.removeSegment(element);
+
+        element.childSegmentJoint?.let {
+            SegmentJointService.instance.delete(it)
+        }
     }
 
     private object HOLDER {

@@ -2,7 +2,6 @@ package ru.psu.service
 
 import ru.psu.model.Chain
 import ru.psu.model.ChainElement
-import ru.psu.model.ChainSegment
 import ru.psu.model.Point
 
 interface ChainService {
@@ -14,5 +13,5 @@ interface ChainService {
 
     fun updateElement(id: Long, chainElement: ChainElement): Chain
 
-    fun addElement(chainElement: ChainElement, rootElement: ChainElement): Chain
+    fun addElement(chainElement: ChainElement, rootElement: ChainElement?): Chain
 }
