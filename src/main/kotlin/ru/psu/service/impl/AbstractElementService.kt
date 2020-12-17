@@ -1,11 +1,16 @@
 package ru.psu.service.impl
 
 import ru.psu.model.ChainElement
+import ru.psu.model.Point
+import ru.psu.model.SystemCoordinate
 import ru.psu.service.ChainElementService
 import ru.psu.service.mapper.ElementUpdateMapper
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
 import java.util.concurrent.atomic.AtomicLong
+import kotlin.math.acos
+import kotlin.math.pow
+import kotlin.math.sqrt
 
 abstract class AbstractElementService<T : ChainElement, R : ChainElement, M : ElementUpdateMapper<T>>(private val updateMapper: ElementUpdateMapper<T>) :
     ChainElementService<T, R> {
@@ -32,5 +37,21 @@ abstract class AbstractElementService<T : ChainElement, R : ChainElement, M : El
 
     override fun delete(element: T) {
         element.deleted = true
+    }
+
+    abstract fun createSystemCoordinate(element: T): SystemCoordinate
+
+    protected fun calcAngleBetweenPoints(
+        endPoint: Point,
+        startPoint: Point
+    ): SystemCoordinate {
+        val multiplyPoints = (endPoint.x * startPoint.x) + (endPoint.y * startPoint.y)
+        val sqrt = sqrt(endPoint.x.pow(2) + endPoint.y.pow(2)) *
+                sqrt(startPoint.x.pow(2) + startPoint.y.pow(2))
+
+        val radianAngle = acos(multiplyPoints / sqrt);
+        val angle = radianAngle * 180 / Math.PI
+
+        return SystemCoordinate(angle)
     }
 }
