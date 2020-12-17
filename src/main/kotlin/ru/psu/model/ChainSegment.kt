@@ -12,7 +12,8 @@ data class ChainSegment(
     var startPoint: Point,
     var hidden: Boolean = false,
     var ephemeral: Boolean = false,
-    var segmentJoint: SegmentJoint? = null,
+    var parentSegmentJoint: SegmentJoint? = null,
+    var childSegmentJoint: SegmentJoint? = null
 ): AbstractChainElement() {
 
     fun segmentLength(): Double {

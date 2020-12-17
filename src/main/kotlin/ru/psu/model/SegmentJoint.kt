@@ -8,20 +8,20 @@ data class SegmentJoint(
     override var weight: Double,
     override var systemCoordinate: SystemCoordinate,
 
-    val point: Point,
+    var point: Point,
     var maxAngle: Double,
     val parentSegment: ChainSegment?,
-    val segments: MutableList<ChainSegment> = mutableListOf()
+    val childSegments: MutableList<ChainSegment> = mutableListOf()
 ) : AbstractChainElement() {
 
     override val elementType: ChainElementType
         get() = ChainElementType.JOINT
 
     fun addSegment(segment: ChainSegment) {
-        this.segments.add(segment)
+        this.childSegments.add(segment)
     }
 
     fun removeSegment(segment: ChainSegment) {
-        this.segments.remove(segment)
+        this.childSegments.remove(segment)
     }
 }
