@@ -6,7 +6,7 @@ import ru.psu.model.enums.ChainElementType
 data class SegmentJoint(
     override var id: Long?,
     override var weight: Double,
-    override var systemCoordinate: SystemCoordinate,
+    override var systemCoordinate: SystemCoordinate?,
 
     var point: Point,
     var maxAngle: Double,
