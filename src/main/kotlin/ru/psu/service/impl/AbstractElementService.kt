@@ -3,14 +3,14 @@ package ru.psu.service.impl
 import ru.psu.model.ChainElement
 import ru.psu.service.ChainElementService
 import ru.psu.service.mapper.ElementUpdateMapper
-import java.lang.IllegalArgumentException
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
 import java.util.concurrent.atomic.AtomicLong
 
-abstract class AbstractElementService<T: ChainElement, R: ChainElement, M: ElementUpdateMapper<T>>(private val updateMapper: ElementUpdateMapper<T>) : ChainElementService<T, R> {
+abstract class AbstractElementService<T : ChainElement, R : ChainElement, M : ElementUpdateMapper<T>>(private val updateMapper: ElementUpdateMapper<T>) :
+    ChainElementService<T, R> {
     private val index: ConcurrentMap<Long, T> = ConcurrentHashMap()
-    private val latestIndexId: AtomicLong = AtomicLong(0);
+    private val latestIndexId: AtomicLong = AtomicLong(0)
 
 
     protected fun addIndex(element: T) {
@@ -22,9 +22,9 @@ abstract class AbstractElementService<T: ChainElement, R: ChainElement, M: Eleme
     }
 
     override fun update(id: Long, element: T): T {
-        val indexedEntity = index[id] as T ?: throw IllegalArgumentException("Cannot update not existed entity")
+        val indexedEntity = index[id] as T
 
-        if(indexedEntity.deleted ) throw IllegalArgumentException("Cannot update deleted element");
+        if (indexedEntity.deleted) throw IllegalArgumentException("Cannot update deleted element")
 
         updateMapper.update(element, indexedEntity)
         return indexedEntity

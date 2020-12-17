@@ -6,5 +6,5 @@ interface ChainElement {
     var id: Long?
     var deleted: Boolean
     val elementType: ChainElementType
-    var systemCoordinate: SystemCoordinate
+    var systemCoordinate: SystemCoordinate?
 }

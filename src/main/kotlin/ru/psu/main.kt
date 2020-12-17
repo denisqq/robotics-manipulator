@@ -1,6 +1,6 @@
 package ru.psu
 
-import tornadofx.launch
+import tornadofx.*
 
 fun main() {
     launch<RoboticsManipulatorApplication>()

@@ -4,7 +4,7 @@ import org.mapstruct.*
 import ru.psu.model.ChainSegment
 
 @Mapper
-interface ChainSegmentMapper: ElementUpdateMapper<ChainSegment> {
+interface ChainSegmentMapper : ElementUpdateMapper<ChainSegment> {
 
     @BeanMapping(ignoreByDefault = true)
     @Mappings(

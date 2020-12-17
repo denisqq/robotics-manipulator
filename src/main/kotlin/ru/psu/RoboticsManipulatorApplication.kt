@@ -2,6 +2,6 @@ package ru.psu
 
 import ru.psu.styles.Styles
 import ru.psu.view.MainView
-import tornadofx.App
+import tornadofx.*
 
-class RoboticsManipulatorApplication: App(MainView::class, Styles::class)
+class RoboticsManipulatorApplication : App(MainView::class, Styles::class)

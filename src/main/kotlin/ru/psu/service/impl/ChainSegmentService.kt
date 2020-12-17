@@ -5,9 +5,10 @@ import ru.psu.model.ChainSegment
 import ru.psu.model.SegmentJoint
 import ru.psu.service.mapper.ChainSegmentMapper
 
-class ChainSegmentService private constructor(updateMapper: ChainSegmentMapper): AbstractElementService<ChainSegment, SegmentJoint, ChainSegmentMapper>(
-    updateMapper
-) {
+class ChainSegmentService private constructor(updateMapper: ChainSegmentMapper) :
+    AbstractElementService<ChainSegment, SegmentJoint, ChainSegmentMapper>(
+        updateMapper
+    ) {
 
     override fun createElement(element: ChainSegment, parentElement: SegmentJoint?): ChainSegment {
         val segment = element.copy(
@@ -25,12 +26,12 @@ class ChainSegmentService private constructor(updateMapper: ChainSegmentMapper):
         val segment = super.update(id, element)
         segment.childSegmentJoint?.point = segment.endPoint
 
-        return segment;
+        return segment
     }
 
     override fun delete(element: ChainSegment) {
         super.delete(element)
-        element.parentSegmentJoint?.removeSegment(element);
+        element.parentSegmentJoint?.removeSegment(element)
 
         element.childSegmentJoint?.let {
             SegmentJointService.instance.delete(it)

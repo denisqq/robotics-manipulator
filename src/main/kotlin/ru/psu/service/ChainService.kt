@@ -7,7 +7,7 @@ import ru.psu.model.Point
 interface ChainService {
     fun getChain(): Chain
 
-    fun calculateChainCenterMass() : Point
+    fun calculateChainCenterMass(): Point
 
     fun deleteElement(chainElement: ChainElement): Chain
 

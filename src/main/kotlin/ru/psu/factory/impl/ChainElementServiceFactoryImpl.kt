@@ -7,7 +7,8 @@ import ru.psu.service.ChainElementService
 import ru.psu.service.impl.ChainSegmentService
 import ru.psu.service.impl.SegmentJointService
 
-class ChainElementServiceFactoryImpl<E: ChainElement, out S: ChainElementService<E, E>> private constructor(): ChainElementServiceFactory<E, S> {
+class ChainElementServiceFactoryImpl<E : ChainElement, out S : ChainElementService<E, E>> private constructor() :
+    ChainElementServiceFactory<E, S> {
     @Suppress("UNCHECKED_CAST")
     override fun create(element: ChainElement): S {
         return when (element.elementType) {

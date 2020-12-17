@@ -6,7 +6,7 @@ import kotlin.math.abs
 data class ChainSegment(
     override var id: Long?,
     override var weight: Double,
-    override var systemCoordinate: SystemCoordinate,
+    override var systemCoordinate: SystemCoordinate?,
 
     var endPoint: Point,
     var startPoint: Point,
@@ -14,7 +14,7 @@ data class ChainSegment(
     var ephemeral: Boolean = false,
     var parentSegmentJoint: SegmentJoint? = null,
     var childSegmentJoint: SegmentJoint? = null
-): AbstractChainElement() {
+) : AbstractChainElement() {
 
     fun segmentLength(): Double {
         //TODO

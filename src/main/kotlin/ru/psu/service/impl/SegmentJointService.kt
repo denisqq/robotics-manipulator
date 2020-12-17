@@ -17,7 +17,7 @@ class SegmentJointService private constructor(updateMapper: SegmentJointMapper) 
         )
         addIndex(joint)
         parentElement?.let {
-            it.parentSegmentJoint = joint
+            it.childSegmentJoint = joint
         }
         return joint
     }
@@ -33,7 +33,7 @@ class SegmentJointService private constructor(updateMapper: SegmentJointMapper) 
 
     override fun delete(element: SegmentJoint) {
         super.delete(element)
-        element.parentSegment?.parentSegmentJoint = null
+        element.parentSegment?.childSegmentJoint = null
 
         element.childSegments.forEach { chainSegment ->
             ChainSegmentService.instance.delete(chainSegment)

@@ -14,7 +14,7 @@ class ChainControllerImpl : ChainController {
         return chainService.getChain()
     }
 
-    override fun addChainElement(chainElement: ChainElement, rootElement: ChainElement): Chain {
+    override fun addChainElement(chainElement: ChainElement, rootElement: ChainElement?): Chain {
         return chainService.addElement(chainElement, rootElement)
     }
 
