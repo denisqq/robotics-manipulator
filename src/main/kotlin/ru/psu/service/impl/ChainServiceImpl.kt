@@ -15,9 +15,15 @@ class ChainServiceImpl : ChainService {
     }
 
     override fun calculateChainCenterMass(): Point {
-//        chain.rootChainSegment?.let {
-//            return it.startPoint;
-//        }
+        chain.rootElement?.let {
+            val chainElementService = ChainElementServiceFactoryImpl.instance.create(it);
+
+            val centerMass = chainElementService.calculateCenterMass(it)
+
+            val weightPoint = centerMass.weightPoint
+
+            return Point(weightPoint.x / centerMass.weight, weightPoint.y / centerMass.weight)
+        }
 
         throw IllegalArgumentException("root segment not init yet, system does`t have system coordinates")
     }
@@ -69,4 +75,5 @@ class ChainServiceImpl : ChainService {
     companion object {
         val instance: ChainService by lazy { HOLDER.INSTANCE }
     }
+
 }
