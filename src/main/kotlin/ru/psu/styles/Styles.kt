@@ -1,11 +1,13 @@
 package ru.psu.styles
 
+import javafx.scene.paint.Color
 import javafx.scene.text.FontWeight
 import tornadofx.*
 
 class Styles : Stylesheet() {
     companion object {
         val heading by cssclass()
+        val selected by cssclass()
     }
 
     init {
@@ -13,6 +15,11 @@ class Styles : Stylesheet() {
             padding = box(10.px)
             fontSize = 20.px
             fontWeight = FontWeight.BOLD
+        }
+
+        selected {
+            fill = Color.BLUE
+            stroke = Color.BLUE
         }
     }
 }
