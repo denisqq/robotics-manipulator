@@ -32,6 +32,7 @@ class MainView : View("MainView") {
         left {
             workArea = pane {
                 addEventFilter(MouseEvent.MOUSE_DRAGGED, ::dragElement)
+                addEventFilter(MouseEvent.MOUSE_RELEASED, ::endDrag)
             }
 
             paddingAll = 10.0
@@ -111,6 +112,11 @@ class MainView : View("MainView") {
         }
     }
 
+    private fun drawChain(chain: Chain) {
+        workArea.clear()
+        chain.rootElement?.let { drawAll(it) }
+    }
+
     private fun drawAll(rootChainElement: ChainElement) {
         when (rootChainElement.elementType) {
             ChainElementType.SEGMENT -> {
@@ -133,6 +139,9 @@ class MainView : View("MainView") {
         circle.onLeftClick {
             this.currentElement = joint
         }
+        circle.onHover {
+            this.currentElement = joint
+        }
         workArea += circle
     }
 
@@ -142,6 +151,9 @@ class MainView : View("MainView") {
         val endPoint = segment.endPoint
         val line = Line(startPoint.x, startPoint.y, endPoint.x, endPoint.y)
         line.strokeWidth = 5.0
+        line.onHover {
+            this.currentElement = segment
+        }
         line.onLeftClick {
             this.currentElement = segment
         }
@@ -199,9 +211,10 @@ class MainView : View("MainView") {
         }
     }
 
-    private fun drawChain(chain: Chain) {
-        workArea.clear()
-        chain.rootElement?.let { drawAll(it) }
+    @Suppress("UNUSED_PARAMETER")
+    private fun endDrag(evt : MouseEvent) {
+        currentElement = null
     }
+
 }
 
