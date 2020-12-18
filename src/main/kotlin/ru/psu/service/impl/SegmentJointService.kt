@@ -33,6 +33,11 @@ class SegmentJointService private constructor(updateMapper: SegmentJointMapper) 
 
     override fun update(id: Long, element: SegmentJoint): SegmentJoint {
         val segmentJoint = super.update(id, element)
+
+        element.parentSegment?.let {
+            it.endPoint = element.point
+        }
+
         segmentJoint.childSegments.forEach { chainSegment ->
             chainSegment.startPoint = segmentJoint.point
         }
