@@ -17,51 +17,21 @@ class MainView : View("MainView") {
     private val chainController = ChainControllerImpl()
     private var workArea: Pane by singleAssign()
 
-    private var chain = chainController.getChain().copy()
-    private var rootElement = chain.rootElement
-    private val segments = mutableListOf<Line>()
-
-    private var selectedSegment: Line? = null
-    private var selectedOffset: Point2D? = null
-    private var activeSegmentButton = false
-    private var activeJointButton = false
-
-    private var currentSegment: ChainSegment? = null
-    private var currentJoint: SegmentJoint? = null
     private var currentElement: ChainElement? = null
     private var currentSegmentWeight: Double? = null
     private var currentJointWeight: Double? = null
     private var currentMaxAngle: Double? = null
 
     init {
-        rootElement?.let { drawChain(it) }
+        val chain = chainController.getChain().copy()
+        chain.rootElement?.let { drawAll(it) }
     }
 
     override val root = borderpane {
         setPrefSize(1280.0, 1024.0)
-//                fun createSegment(): Line {
-//                    val startX: Double
-//                    val startY: Double
-//                    if (segments.isEmpty()) {
-//                        startX = 10.0
-//                        startY = 10.0
-//                    } else {
-//                        startX = segments.last().endX
-//                        startY = segments.last().endY
-//                    }
-//                    val endX = startX.plus(Random.nextDouble(50.0))
-//                    val endY = startY.plus(Random.nextDouble(50.0))
-//                    return line(startX, startY, endX, endY) {
-//                        strokeWidth = 5.0
-//                        segments.add(this)
-//                    }
-//                }
         left {
             workArea = pane {
-
-                addEventFilter(MouseEvent.MOUSE_PRESSED, ::startDrag)
-                addEventFilter(MouseEvent.MOUSE_DRAGGED, ::drag)
-                addEventFilter(MouseEvent.MOUSE_RELEASED, ::endDrag)
+                addEventFilter(MouseEvent.MOUSE_DRAGGED, ::dragElement)
             }
 
             paddingAll = 10.0
@@ -71,11 +41,8 @@ class MainView : View("MainView") {
                 fieldset("Сегмент") {
                     field("Вес:") {
                         textfield {
-                            textProperty().addListener { observable, oldValue, newValue ->
-                                currentSegmentWeight = newValue.toDoubleOrNull().apply { activeSegmentButton = true }
-//                                if (currentWeight != null) {
-//                                        activeSegmentButton = true
-//                                    }
+                            textProperty().addListener { _, _, newValue ->
+                                currentSegmentWeight = newValue.toDoubleOrNull()
                             }
                             this.text = (currentElement as ChainSegment?)?.weight.toString().let { "" }
                         }
@@ -109,18 +76,15 @@ class MainView : View("MainView") {
                 fieldset("Сустав") {
                     field("Вес:") {
                         textfield {
-                            textProperty().addListener { observable, oldValue, newValue ->
-                                currentJointWeight = newValue.toDoubleOrNull().apply { activeJointButton = true }
-//                                if (currentWeight != null) {
-//                                    activeJointButton = true
-//                                }
+                            textProperty().addListener { _, _, newValue ->
+                                currentJointWeight = newValue.toDoubleOrNull()
                             }
                             this.text = (currentElement as SegmentJoint?)?.weight.toString().let { "" }
                         }
                     }
                     field("Максимальный угол:") {
                         textfield {
-                            textProperty().addListener { observable, oldValue, newValue ->
+                            textProperty().addListener { _, _, newValue ->
                                 currentMaxAngle = newValue.toDoubleOrNull()
                             }
                             this.text = (currentElement as SegmentJoint?)?.maxAngle.toString().let { "" }
@@ -147,57 +111,17 @@ class MainView : View("MainView") {
         }
     }
 
-    private fun startDrag(evt: MouseEvent) {
-        segments.firstOrNull {
-            val mousePt = it.sceneToLocal(evt.sceneX, evt.sceneY)
-            it.contains(mousePt)
-        }
-            .apply {
-                if (this != null) {
-
-                    selectedSegment = this
-
-                    val mp = this.parent.sceneToLocal(evt.sceneX, evt.sceneY)
-                    val vizBounds = this.boundsInParent
-
-                    selectedOffset = Point2D(
-                        mp.x - vizBounds.minX - (vizBounds.width - this.boundsInLocal.width) / 2,
-                        mp.y - vizBounds.minY - (vizBounds.height - this.boundsInLocal.height) / 2
-                    )
-                }
-            }
-    }
-
-    private fun drag(evt: MouseEvent) {
-        val mousePt: Point2D = (evt.source as Pane).sceneToLocal(evt.sceneX, evt.sceneY)
-        if (selectedSegment != null && selectedOffset != null) {
-            selectedSegment!!.endX = mousePt.x
-            selectedSegment!!.endY = mousePt.y
-            val index = segments.indexOf(selectedSegment) + 1
-            if (segments.size > index) {
-                segments[index].startX = mousePt.x
-                segments[index].startY = mousePt.y
-            }
-        }
-    }
-
-    @Suppress("UNUSED_PARAMETER")
-    private fun endDrag(evt: MouseEvent) {
-        selectedSegment = null
-        selectedOffset = null
-    }
-
-    private fun drawChain(rootChainElement: ChainElement) {
+    private fun drawAll(rootChainElement: ChainElement) {
         when (rootChainElement.elementType) {
             ChainElementType.SEGMENT -> {
                 rootChainElement as ChainSegment
                 drawSegment(rootChainElement)
-                rootChainElement.childSegmentJoint?.let { drawChain(it) }
+                rootChainElement.childSegmentJoint?.let { drawAll(it) }
             }
             ChainElementType.JOINT -> {
                 rootChainElement as SegmentJoint
                 drawJoint(rootChainElement)
-                rootChainElement.childSegments.forEach { drawChain(it) }
+                rootChainElement.childSegments.forEach { drawAll(it) }
             }
         }
     }
@@ -205,7 +129,10 @@ class MainView : View("MainView") {
     private fun drawJoint(joint: SegmentJoint) {
         this.currentElement = joint
         val centerPoint = joint.point
-        val circle = Circle(centerPoint.x, centerPoint.y, 5.0)
+        val circle = Circle(centerPoint.x, centerPoint.y, 10.0)
+        circle.onLeftClick {
+            this.currentElement = joint
+        }
         workArea += circle
     }
 
@@ -215,11 +142,13 @@ class MainView : View("MainView") {
         val endPoint = segment.endPoint
         val line = Line(startPoint.x, startPoint.y, endPoint.x, endPoint.y)
         line.strokeWidth = 5.0
+        line.onLeftClick {
+            this.currentElement = segment
+        }
         workArea += line
     }
 
     private fun createSegment(weight: Double) {
-        workArea.clear()
         val startPoint = if (currentElement == null) {
             Point(0.0, 0.0)
         } else {
@@ -229,13 +158,10 @@ class MainView : View("MainView") {
             Point(startPoint.x.plus(Random.nextDouble(10.0, 100.0)), startPoint.y.plus(Random.nextDouble(10.0, 100.0)))
         val segment = ChainSegment(null, weight, SystemCoordinate(1337.0), endPoint, startPoint)
         val chain = chainController.addChainElement(segment, currentElement).copy()
-        this.chain = chain
-        this.rootElement = chain.rootElement
-        this.rootElement?.let { drawChain(it) }
+        drawChain(chain)
     }
 
     private fun createJoint(weight: Double, maxAngle: Double) {
-        workArea.clear()
         val point = if (currentElement == null) {
             Point(0.0, 0.0)
         } else {
@@ -243,18 +169,39 @@ class MainView : View("MainView") {
         }
         val joint = SegmentJoint(null, weight, SystemCoordinate(228.0), point, maxAngle, null)
         val chain = chainController.addChainElement(joint, currentElement).copy()
-        this.chain = chain
-        this.rootElement = chain.rootElement
-        this.rootElement?.let { drawChain(it) }
+        drawChain(chain)
     }
 
     private fun deleteElement() {
+        val chain = chainController.deleteChainElement(currentElement!!).copy()
+        drawChain(chain)
+    }
+
+    private fun dragElement(evt: MouseEvent) {
+        val mousePoint: Point2D = (evt.source as Pane).sceneToLocal(evt.sceneX, evt.sceneY)
+        if (currentElement != null) {
+            when (currentElement!!.elementType) {
+                ChainElementType.SEGMENT -> {
+                    val segment = currentElement as ChainSegment
+                    segment.endPoint.x = mousePoint.x
+                    segment.endPoint.y = mousePoint.y
+                    val chain = chainController.updateChainElement(segment.id!!, segment).copy()
+                    drawChain(chain)
+                }
+                ChainElementType.JOINT -> {
+                    val joint = currentElement as SegmentJoint
+                    joint.point.x = mousePoint.x
+                    joint.point.y = mousePoint.y
+                    val chain = chainController.updateChainElement(joint.id!!, joint).copy()
+                    drawChain(chain)
+                }
+            }
+        }
+    }
+
+    private fun drawChain(chain: Chain) {
         workArea.clear()
-        val chain = chainController.deleteChainElement(currentElement!!)
-        this.chain = chain
-        this.rootElement = chain.rootElement
-        this.currentElement = null
-        this.rootElement?.let { drawChain(it) }
+        chain.rootElement?.let { drawAll(it) }
     }
 }
 
