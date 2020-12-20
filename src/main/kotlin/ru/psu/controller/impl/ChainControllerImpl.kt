@@ -3,6 +3,7 @@ package ru.psu.controller.impl
 import ru.psu.controller.ChainController
 import ru.psu.model.Chain
 import ru.psu.model.ChainElement
+import ru.psu.model.Point
 import ru.psu.service.ChainService
 import ru.psu.service.impl.ChainServiceImpl
 
@@ -24,5 +25,9 @@ class ChainControllerImpl : ChainController {
 
     override fun updateChainElement(id: Long, chainElement: ChainElement): Chain {
         return chainService.updateElement(id, chainElement)
+    }
+
+    override fun calculateCenterMass(): Point {
+        return chainService.calculateChainCenterMass()
     }
 }
