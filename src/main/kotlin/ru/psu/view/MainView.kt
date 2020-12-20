@@ -3,6 +3,7 @@ package ru.psu.view
 import javafx.geometry.Orientation
 import javafx.geometry.Point2D
 import javafx.geometry.Pos
+import javafx.scene.control.Button
 import javafx.scene.input.MouseEvent
 import javafx.scene.layout.Pane
 import javafx.scene.paint.Color
@@ -17,6 +18,8 @@ import kotlin.random.Random
 class MainView : View("MainView") {
     private val chainController = ChainControllerImpl()
     private var workArea: Pane by singleAssign()
+    private var createSegmentButton = Button("Создать сегмент")
+    private var createJointButton = Button("Создать сустав")
 
     companion object {
         private var currentElement: ChainElement? = null
@@ -25,11 +28,21 @@ class MainView : View("MainView") {
         private var currentMaxAngle: Double? = null
     }
 
+
     init {
+        setupButtons()
         val chain = chainController.getChain().copy()
         chain.rootElement?.let { drawAll(it) }
     }
 
+    private fun setupButtons() {
+        createSegmentButton.isDisable = true
+        createSegmentButton.action { createSegment(currentSegmentWeight!!) }
+        createJointButton.isDisable = true
+        createJointButton.action { createJoint(currentJointWeight!!, currentMaxAngle!!) }
+    }
+
+    @Suppress("DuplicatedCode")
     override val root = borderpane {
         setPrefSize(1280.0, 1024.0)
         left {
@@ -46,14 +59,13 @@ class MainView : View("MainView") {
                         textfield {
                             textProperty().addListener { _, _, newValue ->
                                 currentSegmentWeight = newValue.toDoubleOrNull()
+                                createSegmentButton.isDisable = currentSegmentWeight == null
                             }
                             this.text = (currentElement as ChainSegment?)?.weight.toString().let { "" }
                         }
                     }
                     hbox(spacing = 50.0, alignment = Pos.CENTER) {
-                        button("Создать сегмент") {
-                            action { createSegment(currentSegmentWeight!!) }
-                        }
+                        this.addChildIfPossible(createSegmentButton)
                     }
                 }
                 fieldset("Сустав") {
@@ -61,6 +73,7 @@ class MainView : View("MainView") {
                         textfield {
                             textProperty().addListener { _, _, newValue ->
                                 currentJointWeight = newValue.toDoubleOrNull()
+                                createJointButton.isDisable = !(currentMaxAngle != null && currentJointWeight != null)
                             }
                             this.text = (currentElement as SegmentJoint?)?.weight.toString().let { "" }
                         }
@@ -69,14 +82,13 @@ class MainView : View("MainView") {
                         textfield {
                             textProperty().addListener { _, _, newValue ->
                                 currentMaxAngle = newValue.toDoubleOrNull()
+                                createJointButton.isDisable = !(currentMaxAngle != null && currentJointWeight != null)
                             }
                             this.text = (currentElement as SegmentJoint?)?.maxAngle.toString().let { "" }
                         }
                     }
                     hbox(spacing = 50.0, alignment = Pos.CENTER) {
-                        button("Создать сустав") {
-                            action { createJoint(currentJointWeight!!, currentMaxAngle!!) }
-                        }
+                        this.addChildIfPossible(createJointButton)
                     }
                 }
             }
@@ -87,28 +99,28 @@ class MainView : View("MainView") {
                     ChainElementType.SEGMENT -> {
                         field("Координаты начала:", Orientation.VERTICAL) {
                             text("X") {
-                                this.text = (currentElement as ChainSegment?)?.startPoint?.x.toString().let { "X" }
+                                this.text = (currentElement as ChainSegment?)?.startPoint?.x.toString()
                             }
                             text("Y") {
-                                this.text = (currentElement as ChainSegment?)?.startPoint?.x.toString().let { "Y" }
+                                this.text = (currentElement as ChainSegment?)?.startPoint?.x.toString()
                             }
                         }
                         field("Координаты конца:", Orientation.VERTICAL) {
                             text("X") {
-                                this.text = (currentElement as ChainSegment?)?.endPoint?.x.toString().let { "X" }
+                                this.text = (currentElement as ChainSegment?)?.endPoint?.x.toString()
                             }
                             text("Y") {
-                                this.text = (currentElement as ChainSegment?)?.endPoint?.y.toString().let { "Y" }
+                                this.text = (currentElement as ChainSegment?)?.endPoint?.y.toString()
                             }
                         }
                     }
                     ChainElementType.JOINT -> {
                         field("Координаты центра:", Orientation.VERTICAL) {
                             text("X") {
-                                this.text = (currentElement as SegmentJoint?)?.point?.x.toString().let { "X" }
+                                this.text = (currentElement as SegmentJoint?)?.point?.x.toString()
                             }
                             text("Y") {
-                                this.text = (currentElement as SegmentJoint?)?.point?.y.toString().let { "Y" }
+                                this.text = (currentElement as SegmentJoint?)?.point?.y.toString()
                             }
                         }
                     }
@@ -141,12 +153,14 @@ class MainView : View("MainView") {
     }
 
     private fun drawJoint(joint: SegmentJoint) {
-        val centerPoint = joint.point
+        val segmentJoint = joint.copy()
+        val centerPoint = segmentJoint.point
         val circle = Circle(centerPoint.x, centerPoint.y, 10.0)
         circle.onLeftClick {
             circle.fill = Color.BLUE
             currentElement = joint
         }
+//        currentElement = joint
         workArea += circle
     }
 
@@ -159,6 +173,7 @@ class MainView : View("MainView") {
             line.stroke = Color.BLUE
             currentElement = segment
         }
+//        currentElement = segment
         workArea += line
     }
 
@@ -171,6 +186,8 @@ class MainView : View("MainView") {
         val endPoint =
             Point(startPoint.x.plus(Random.nextDouble(10.0, 100.0)), startPoint.y.plus(Random.nextDouble(10.0, 100.0)))
         val segment = ChainSegment(null, weight, SystemCoordinate(1337.0), endPoint, startPoint)
+        createSegmentButton.isDisable = true
+        createJointButton.isDisable = !(currentMaxAngle != null && currentJointWeight != null)
         val chain = chainController.addChainElement(segment, currentElement).copy()
         drawChain(chain)
     }
@@ -182,6 +199,8 @@ class MainView : View("MainView") {
             Point((currentElement as ChainSegment).endPoint.x, (currentElement as ChainSegment).endPoint.y)
         }
         val joint = SegmentJoint(null, weight, SystemCoordinate(228.0), point, maxAngle, null)
+        createJointButton.isDisable = true
+        createSegmentButton.isDisable = currentSegmentWeight == null
         val chain = chainController.addChainElement(joint, currentElement).copy()
         drawChain(chain)
     }
