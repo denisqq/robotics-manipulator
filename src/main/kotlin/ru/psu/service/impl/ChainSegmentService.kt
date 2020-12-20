@@ -26,7 +26,7 @@ class ChainSegmentService private constructor(updateMapper: ChainSegmentMapper) 
     override fun update(id: Long, element: ChainSegment): ChainSegment {
         val systemCoordinate = createSystemCoordinate(element)
         element.parentSegmentJoint?.let {
-            if(it.maxAngle > systemCoordinate.angle) {
+            if(it.maxAngle < systemCoordinate.angle) {
                 throw IllegalArgumentException("Cannot rotate element on angle = ${systemCoordinate.angle} because segment joint max angle = ${it.maxAngle}")
             }
         }
@@ -72,7 +72,7 @@ class ChainSegmentService private constructor(updateMapper: ChainSegmentMapper) 
         element.childSegmentJoint?.let {
 
             val childElementCenterMass = SegmentJointService.instance.calculateCenterMass(it)
-            val childElementCenterMassPoint = childElementCenterMass.point;
+            val childElementCenterMassPoint = childElementCenterMass.point
 
             val childXPoint = (childElementCenterMassPoint.x + xPoint) / 2
             val childYPoint = (childElementCenterMassPoint.y + yPoint) / 2
@@ -85,7 +85,7 @@ class ChainSegmentService private constructor(updateMapper: ChainSegmentMapper) 
                 y = childYPoint * weight
             )
 
-            return CenterMass(elementTreeCenterMassPoint, weight, weightPoint);
+            return CenterMass(elementTreeCenterMassPoint, weight, weightPoint)
         } ?: run {
             val weightPoint = Point(
                 x = xPoint * element.weight,
