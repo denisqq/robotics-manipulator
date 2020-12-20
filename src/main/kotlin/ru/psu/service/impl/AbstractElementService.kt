@@ -14,7 +14,7 @@ import kotlin.math.sqrt
 
 abstract class AbstractElementService<T : ChainElement, R : ChainElement, M : ElementUpdateMapper<T>>(private val updateMapper: ElementUpdateMapper<T>) :
     ChainElementService<T, R> {
-    private val index: ConcurrentMap<Long, T> = ConcurrentHashMap()
+    protected val index: ConcurrentMap<Long, T> = ConcurrentHashMap()
     private val latestIndexId: AtomicLong = AtomicLong(0)
 
 
@@ -46,12 +46,23 @@ abstract class AbstractElementService<T : ChainElement, R : ChainElement, M : El
         startPoint: Point
     ): SystemCoordinate {
         val multiplyPoints = (endPoint.x * startPoint.x) + (endPoint.y * startPoint.y)
+        println("multiplyPoints = $multiplyPoints")
+
         val sqrt = sqrt(endPoint.x.pow(2) + endPoint.y.pow(2)) *
                 sqrt(startPoint.x.pow(2) + startPoint.y.pow(2))
 
-        val radianAngle = acos(multiplyPoints / sqrt);
-        val angle = radianAngle * 180 / Math.PI
+        println("sqrt = $sqrt")
+        val divide = multiplyPoints / sqrt
+
+        println("divide = $divide")
+        val radianAngle = acos(divide);
+        var angle = radianAngle * 180 / Math.PI
+
+        if(angle.isNaN()) {
+            angle = 0.0
+        }
 
         return SystemCoordinate(angle)
     }
+
 }

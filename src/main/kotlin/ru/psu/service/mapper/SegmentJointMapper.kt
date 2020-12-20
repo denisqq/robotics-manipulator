@@ -10,7 +10,7 @@ interface SegmentJointMapper : ElementUpdateMapper<SegmentJoint> {
     @Mappings(
         Mapping(source = "weight", target = "weight"),
         Mapping(source = "maxAngle", target = "maxAngle"),
-//        Mapping(source = "systemCoordinate", target = "systemCoordinate")
+        Mapping(source = "systemCoordinate", target = "systemCoordinate")
     )
     override fun update(from: SegmentJoint, @MappingTarget to: SegmentJoint)
 }

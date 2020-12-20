@@ -6,6 +6,7 @@ import ru.psu.model.ChainElement
 import ru.psu.model.ChainState
 import ru.psu.model.Point
 import ru.psu.service.ChainService
+import java.util.*
 
 
 //TODO может быть проблема с конкуретным доступом к chain
@@ -76,6 +77,16 @@ class ChainServiceImpl : ChainService {
 
     companion object {
         val instance: ChainService by lazy { HOLDER.INSTANCE }
+    }
+
+    override fun findElement(vararg point: Point): Collection<ChainElement> {
+        if(point.size == 1) {
+            return SegmentJointService.instance.findElement(*point)
+        } else if(point.size == 2) {
+            return ChainSegmentServiceImpl.instance.findElement(*point)
+        }
+
+        return Collections.emptyList()
     }
 
 }

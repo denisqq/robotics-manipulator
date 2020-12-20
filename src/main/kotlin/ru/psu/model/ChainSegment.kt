@@ -2,6 +2,8 @@ package ru.psu.model
 
 import ru.psu.model.enums.ChainElementType
 import kotlin.math.abs
+import kotlin.math.pow
+import kotlin.math.sqrt
 
 data class ChainSegment(
     override var id: Long?,
@@ -17,8 +19,10 @@ data class ChainSegment(
 ) : AbstractChainElement() {
 
     fun segmentLength(): Double {
-        //TODO
-        return abs(endPoint.x - startPoint.x)
+        val xSqr = (this.endPoint.x - this.startPoint.x).pow(2)
+        val ySqr = (this.endPoint.y - this.startPoint.y).pow(2)
+
+        return sqrt(xSqr + ySqr)
     }
 
     override val elementType: ChainElementType

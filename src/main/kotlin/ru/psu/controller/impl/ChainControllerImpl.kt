@@ -7,7 +7,7 @@ import ru.psu.model.Point
 import ru.psu.service.ChainService
 import ru.psu.service.impl.ChainServiceImpl
 
-class ChainControllerImpl : ChainController {
+object ChainControllerImpl : ChainController {
     private val chainService: ChainService = ChainServiceImpl.instance
 
 
