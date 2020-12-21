@@ -8,7 +8,9 @@ import javafx.scene.layout.Pane
 import javafx.scene.paint.Color
 import javafx.scene.shape.Circle
 import javafx.scene.shape.Line
+import javafx.stage.FileChooser
 import ru.psu.controller.impl.ChainControllerImpl
+import ru.psu.controller.impl.FileControllerImpl
 import ru.psu.model.*
 import ru.psu.model.enums.ChainElementType
 import tornadofx.*
@@ -114,6 +116,20 @@ class MainView : View("MainView") {
                 }
                 button("Удалить") {
                     action { deleteElement() }
+                }
+                button("Экспортировать") {
+                    action {
+                        val dir = chooseDirectory("Выберите директорию")
+                        FileControllerImpl.exportChain(dir!!);
+                    }
+                }
+
+                button("Импортировать") {
+                    action {
+                        val files = chooseFile(title = "Выберите дамп", filters = arrayOf(FileChooser.ExtensionFilter("JSON", "*.json")), null)
+                        val file = files[0]
+                        FileControllerImpl.importChain(file)
+                    }
                 }
             }
         }

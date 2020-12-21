@@ -1,5 +1,6 @@
 package ru.psu.model
 
+import com.fasterxml.jackson.annotation.JsonIgnore
 import ru.psu.model.enums.ChainElementType
 import kotlin.math.abs
 import kotlin.math.pow
@@ -14,6 +15,7 @@ data class ChainSegment(
     var startPoint: Point,
     var hidden: Boolean = false,
     var ephemeral: Boolean = false,
+    @JsonIgnore
     var parentSegmentJoint: SegmentJoint? = null,
     var childSegmentJoint: SegmentJoint? = null
 ) : AbstractChainElement() {

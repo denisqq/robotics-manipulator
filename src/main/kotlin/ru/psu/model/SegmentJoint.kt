@@ -1,5 +1,6 @@
 package ru.psu.model
 
+import com.fasterxml.jackson.annotation.JsonIgnore
 import ru.psu.model.enums.ChainElementType
 
 
@@ -10,6 +11,7 @@ data class SegmentJoint(
 
     var point: Point,
     var maxAngle: Double,
+    @JsonIgnore
     val parentSegment: ChainSegment?,
     val childSegments: MutableList<ChainSegment> = mutableListOf()
 ) : AbstractChainElement() {

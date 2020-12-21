@@ -1,17 +1,21 @@
 package ru.psu.service.impl
 
+import org.mapstruct.factory.Mappers
 import ru.psu.factory.impl.ChainElementServiceFactoryImpl
 import ru.psu.model.Chain
 import ru.psu.model.ChainElement
 import ru.psu.model.ChainState
 import ru.psu.model.Point
 import ru.psu.service.ChainService
+import ru.psu.service.mapper.ChainMapper
 import java.util.*
 
 
 //TODO может быть проблема с конкуретным доступом к chain
 class ChainServiceImpl : ChainService {
     private val chain: Chain = Chain()
+
+    private val chainMapper: ChainMapper = Mappers.getMapper(ChainMapper::class.java)
 
     override fun getChain(): Chain {
         return chain
@@ -80,13 +84,17 @@ class ChainServiceImpl : ChainService {
     }
 
     override fun findElement(vararg point: Point): Collection<ChainElement> {
-        if(point.size == 1) {
+        if (point.size == 1) {
             return SegmentJointService.instance.findElement(*point)
-        } else if(point.size == 2) {
+        } else if (point.size == 2) {
             return ChainSegmentServiceImpl.instance.findElement(*point)
         }
 
         return Collections.emptyList()
+    }
+
+    override fun updateChain(chain: Chain) {
+        chainMapper.update(chain, this.chain)
     }
 
 }
