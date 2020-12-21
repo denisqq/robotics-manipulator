@@ -25,8 +25,30 @@ data class ChainSegment(
         return sqrt(xSqr + ySqr)
     }
 
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as ChainSegment
+
+        if (id != other.id) return false
+        if (endPoint != other.endPoint) return false
+        if (startPoint != other.startPoint) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = id?.hashCode() ?: 0
+        result = 31 * result + endPoint.hashCode()
+        result = 31 * result + startPoint.hashCode()
+        return result
+    }
+
     override val elementType: ChainElementType
         get() = ChainElementType.SEGMENT
+
+
 
 //
 //    override fun elementType(): ChainElementType {

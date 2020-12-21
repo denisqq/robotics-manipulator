@@ -24,4 +24,24 @@ data class SegmentJoint(
     fun removeSegment(segment: ChainSegment) {
         this.childSegments.remove(segment)
     }
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as SegmentJoint
+
+        if (id != other.id) return false
+        if (point != other.point) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = id?.hashCode() ?: 0
+        result = 31 * result + point.hashCode()
+        return result
+    }
+
+
 }
