@@ -42,6 +42,13 @@ class ChainSegmentServiceImpl private constructor(updateMapper: ChainSegmentMapp
     }
 
     private fun updateChainSegment(element: ChainSegment, id: Long): ChainSegment {
+        val indexedEntity = index[id];
+
+        //Доп валидация, не меняем стартовую точку сегмента относительно родителя
+        indexedEntity?.parentSegmentJoint?.let {
+            element.startPoint = it.point
+        }
+
         element.systemCoordinate = createSystemCoordinate(element)
         ChainSegmentValidatorImpl.validate(element)
 
