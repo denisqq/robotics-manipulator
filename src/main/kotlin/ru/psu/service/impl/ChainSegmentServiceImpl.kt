@@ -5,7 +5,8 @@ import ru.psu.model.*
 import ru.psu.service.ChainSegmentService
 import ru.psu.service.mapper.ChainSegmentMapper
 import ru.psu.service.validator.impl.ChainSegmentValidatorImpl
-import java.util.*
+import kotlin.math.max
+import kotlin.math.min
 
 class ChainSegmentServiceImpl private constructor(updateMapper: ChainSegmentMapper) : ChainSegmentService,
     AbstractElementService<ChainSegment, SegmentJoint, ChainSegmentMapper>(updateMapper) {
@@ -109,16 +110,65 @@ class ChainSegmentServiceImpl private constructor(updateMapper: ChainSegmentMapp
     }
 
     override fun findElement(vararg point: Point): Collection<ChainSegment> {
-//        val firstPoint = point[0]
-//        val secondPoint = point[1]
-//
-//        val x = (secondPoint.y - firstPoint.y) / (firstPoint.x - secondPoint.x)
-//        val y = firstPoint.x * x + firstPoint.y
+        val firstPoint = point[0] //that X absic
+        val secondPoint = point[1] // that Y ordinate
 
-//        val point
+        //https://www.geeksforgeeks.org/check-if-two-given-line-segments-intersect/
+        return index.filter {
+            val value = it.value
+            if(value.ephemeral) {
+                true
+            } else{
+                doIntersect(firstPoint, value.endPoint, secondPoint, value.startPoint)
+            }
+        }.values
 
-        //TODO https://rosettacode.org/wiki/Find_the_intersection_of_two_lines#Java
-        return Collections.emptyList()
+    }
+
+    // The main function that returns true if line segment 'p1q1'
+    // and 'p2q2' intersect.
+    private fun doIntersect(p1: Point?, q1: Point?, p2: Point?, q2: Point?): Boolean {
+        // Find the four orientations needed for general and
+        // special cases
+        val o1 = orientation(p1!!, q1!!, p2!!)
+        val o2 = orientation(p1, q1, q2!!)
+        val o3 = orientation(p2, q2, p1)
+        val o4 = orientation(p2, q2, q1)
+
+        // General case
+        if (o1 != o2 && o3 != o4) return true
+
+        // Special Cases
+        // p1, q1 and p2 are colinear and p2 lies on segment p1q1
+        if (o1 == 0 && onSegment(p1, p2, q1)) return true
+
+        // p1, q1 and q2 are colinear and q2 lies on segment p1q1
+        if (o2 == 0 && onSegment(p1, q2, q1)) return true
+
+        // p2, q2 and p1 are colinear and p1 lies on segment p2q2
+        if (o3 == 0 && onSegment(p2, p1, q2)) return true
+
+        // p2, q2 and q1 are colinear and q1 lies on segment p2q2
+        return o4 == 0 && onSegment(p2, q1, q2)
+    }
+
+
+    private fun onSegment(p: Point, q: Point, r: Point): Boolean {
+        return q.x <= max(p.x, r.x) && q.x >= min(p.x, r.x) && q.y <= max(p.y, r.y) && q.y >= min(p.y, r.y)
+    }
+
+
+    // To find orientation of ordered triplet (p, q, r).
+    // The function returns following values
+    // 0 --> p, q and r are colinear
+    // 1 --> Clockwise
+    // 2 --> Counterclockwise
+    private fun orientation(p: Point, q: Point, r: Point): Int {
+        // See https://www.geeksforgeeks.org/orientation-3-ordered-points/
+        // for details of below formula.
+        val value = ((q.y - p.y) * (r.x - q.x) - (q.x - p.x) * (r.y - q.y)).toInt()
+        if (value == 0) return 0 // colinear
+        return if (value > 0) 1 else 2 // clock or counterclock wise
     }
 
 }
