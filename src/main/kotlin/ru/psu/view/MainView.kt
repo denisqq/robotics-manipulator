@@ -6,7 +6,6 @@ import javafx.geometry.Pos
 import javafx.scene.control.Button
 import javafx.scene.input.MouseEvent
 import javafx.scene.layout.Pane
-import javafx.scene.paint.Color
 import javafx.scene.shape.Circle
 import javafx.scene.shape.Line
 import javafx.scene.shape.Shape
@@ -51,8 +50,10 @@ class MainView : View("MainView") {
         setPrefSize(1280.0, 1024.0)
         left {
             workArea = pane {
-                addEventFilter(MouseEvent.MOUSE_PRESSED, ::chooseElement)
+                addEventFilter(MouseEvent.MOUSE_CLICKED, ::chooseElement)
+                addEventFilter(MouseEvent.MOUSE_PRESSED, ::startElementDragging)
                 addEventFilter(MouseEvent.MOUSE_DRAGGED, ::dragElement)
+                addEventFilter(MouseEvent.MOUSE_RELEASED, ::endDrag)
             }
 
             paddingAll = 10.0
@@ -161,6 +162,11 @@ class MainView : View("MainView") {
     private fun drawJoint(joint: SegmentJoint) {
         val centerPoint = joint.point
         val circle = Circle(centerPoint.x, centerPoint.y, 10.0)
+        if (lastElement == null || lastElement == joint.parentSegment) {
+            removeBlueColor()
+            lastElement = joint
+            circle.addClass(Styles.selected)
+        }
         chainMap[joint] = circle
         workArea += circle
     }
@@ -170,6 +176,15 @@ class MainView : View("MainView") {
         val endPoint = segment.endPoint
         val line = Line(startPoint.x, startPoint.y, endPoint.x, endPoint.y)
         line.strokeWidth = 5.0
+        if (lastElement == null || lastElement == segment.parentSegmentJoint) {
+            removeBlueColor()
+            lastElement = if (segment.parentSegmentJoint != null) {
+                segment.parentSegmentJoint?.childSegments?.last()
+            } else {
+                segment
+            }
+            line.addClass(Styles.selected)
+        }
         chainMap[segment] = line
         workArea += line
     }
@@ -183,7 +198,6 @@ class MainView : View("MainView") {
         val endPoint =
             Point(startPoint.x.plus(Random.nextDouble(10.0, 100.0)), startPoint.y.plus(Random.nextDouble(10.0, 100.0)))
         val segment = ChainSegment(null, weight, SystemCoordinate(1337.0), endPoint, startPoint)
-        createSegmentButton.isDisable = true
         createJointButton.isDisable = !(currentMaxAngle != null && currentJointWeight != null)
         val chain = ChainControllerImpl.addChainElement(segment, lastElement).copy()
         drawChain(chain)
@@ -196,7 +210,6 @@ class MainView : View("MainView") {
             Point((lastElement as ChainSegment).endPoint.x, (lastElement as ChainSegment).endPoint.y)
         }
         val joint = SegmentJoint(null, weight, SystemCoordinate(228.0), point, maxAngle, null)
-        createJointButton.isDisable = true
         createSegmentButton.isDisable = currentSegmentWeight == null
         val chain = ChainControllerImpl.addChainElement(joint, lastElement).copy()
         drawChain(chain)
@@ -208,18 +221,13 @@ class MainView : View("MainView") {
         drawChain(chain)
     }
 
-    private fun chooseElement(evt: MouseEvent) {
+    private fun startElementDragging(evt: MouseEvent) {
         chainMap.values.firstOrNull {
             val mousePt: Point2D = it.sceneToLocal(evt.sceneX, evt.sceneY)
             it.contains(mousePt)
         }.apply {
             if (this != null) {
-                if (this.hasClass(Styles.selected)) {
-                    this.removeClass(Styles.selected)
-                    selectedElement = null
-                } else {
                     selectElement(this)
-                }
             }
         }
     }
@@ -246,12 +254,38 @@ class MainView : View("MainView") {
         }
     }
 
+    @Suppress("UNUSED_PARAMETER")
+    private fun endDrag(evt: MouseEvent) {
+        selectedShape = null
+        selectedElement = null
+    }
+
+    private fun chooseElement(evt: MouseEvent) {
+        if (evt.clickCount == 2) {
+            for (element in chainMap) {
+            val mousePt: Point2D = element.value.sceneToLocal(evt.sceneX, evt.sceneY)
+                if (element.value.contains(mousePt)) {
+                    removeBlueColor()
+                    element.value.addClass(Styles.selected)
+                    lastElement = element.key
+                }
+            }
+        }
+    }
+
     private fun selectElement(shape: Shape) {
         for (element in chainMap) {
             if (element.value == shape) {
                 selectedElement = element.key
                 selectedShape = element.value
-                selectedShape!!.addClass(Styles.selected)
+            }
+        }
+    }
+
+    private fun removeBlueColor() {
+        chainMap.values.forEach {
+            if (it.hasClass(Styles.selected)) {
+                it.removeClass(Styles.selected)
             }
         }
     }
