@@ -116,7 +116,11 @@ class ChainSegmentServiceImpl private constructor(updateMapper: ChainSegmentMapp
         //https://www.geeksforgeeks.org/check-if-two-given-line-segments-intersect/
         return index.filter {
             val value = it.value
-            doIntersect(firstPoint, value.endPoint, secondPoint, value.startPoint)
+            if(value.ephemeral) {
+                true
+            } else{
+                doIntersect(firstPoint, value.endPoint, secondPoint, value.startPoint)
+            }
         }.values
 
     }
