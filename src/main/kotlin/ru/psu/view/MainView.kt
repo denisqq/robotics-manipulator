@@ -45,7 +45,6 @@ class MainView : View("MainView") {
         createJointButton.action { createJoint(currentJointWeight!!, currentMaxAngle!!) }
     }
 
-    @Suppress("DuplicatedCode")
     override val root = borderpane {
         setPrefSize(1280.0, 1024.0)
         left {
@@ -157,6 +156,11 @@ class MainView : View("MainView") {
                 rootChainElement.childSegments.forEach { drawAll(it) }
             }
         }
+        for (element in chainMap) {
+            if (element.key == lastElement) {
+                element.value.addClass(Styles.selected)
+            }
+        }
     }
 
     private fun drawJoint(joint: SegmentJoint) {
@@ -165,27 +169,30 @@ class MainView : View("MainView") {
         if (lastElement == null || lastElement == joint.parentSegment) {
             removeBlueColor()
             lastElement = joint
-            circle.addClass(Styles.selected)
         }
         chainMap[joint] = circle
         workArea += circle
     }
 
-    private fun drawSegment(segment: ChainSegment) {
-        val startPoint = segment.startPoint
-        val endPoint = segment.endPoint
+    private fun drawSegment(chainSegment: ChainSegment) {
+        val startPoint = chainSegment.startPoint
+        val endPoint = chainSegment.endPoint
         val line = Line(startPoint.x, startPoint.y, endPoint.x, endPoint.y)
         line.strokeWidth = 5.0
-        if (lastElement == null || lastElement == segment.parentSegmentJoint) {
+        if (lastElement == null || lastElement == chainSegment.parentSegmentJoint) {
             removeBlueColor()
-            lastElement = if (segment.parentSegmentJoint != null) {
-                segment.parentSegmentJoint?.childSegments?.last()
+            if (chainSegment.parentSegmentJoint != null) {
+                var prevId: Long = -1
+                for (segment in chainSegment.parentSegmentJoint!!.childSegments) {
+                    val id = segment.id!!
+                    if (id > prevId) { lastElement = segment }
+                     prevId = id
+                }
             } else {
-                segment
+                lastElement =  chainSegment
             }
-            line.addClass(Styles.selected)
         }
-        chainMap[segment] = line
+        chainMap[chainSegment] = line
         workArea += line
     }
 
@@ -254,8 +261,7 @@ class MainView : View("MainView") {
         }
     }
 
-    @Suppress("UNUSED_PARAMETER")
-    private fun endDrag(evt: MouseEvent) {
+    private fun endDrag(@Suppress("UNUSED_PARAMETER") evt: MouseEvent) {
         selectedShape = null
         selectedElement = null
     }
