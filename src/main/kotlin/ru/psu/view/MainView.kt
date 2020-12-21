@@ -44,16 +44,17 @@ class MainView : View("MainView") {
 
     private fun setupButtons() {
         createSegmentButton.isDisable = true
-        createSegmentButton.action { createSegment(currentSegmentWeight!!, currentSegmentIsHidden) }
+        createSegmentButton.action { addChainElement(createSegment()) }
         createJointButton.isDisable = true
-        createJointButton.action { createJoint(currentJointWeight!!, currentMaxAngle!!) }
+        createJointButton.action { addChainElement(createJoint()) }
 
         updateSegmentButton.isDisable = true
-        updateSegmentButton.action { updateSegment() }
+        updateSegmentButton.action { updateChainElement(createSegment()) }
         updateJointButton.isDisable = true
-        updateJointButton.action { updateJoint() }
+        updateJointButton.action { updateChainElement(createJoint()) }
     }
 
+    @Suppress("DuplicatedCode")
     override val root = borderpane {
         setPrefSize(1280.0, 1024.0)
         left {
@@ -74,6 +75,7 @@ class MainView : View("MainView") {
                             textProperty().addListener { _, _, newValue ->
                                 currentSegmentWeight = newValue.toDoubleOrNull()
                                 createSegmentButton.isDisable = currentSegmentWeight == null
+                                updateSegmentButton.isDisable = currentSegmentWeight == null
                             }
                             this.text = (lastElement as ChainSegment?)?.weight.toString().let { "" }
                         }
@@ -93,6 +95,7 @@ class MainView : View("MainView") {
                             textProperty().addListener { _, _, newValue ->
                                 currentJointWeight = newValue.toDoubleOrNull()
                                 createJointButton.isDisable = !(currentMaxAngle != null && currentJointWeight != null)
+                                updateJointButton.isDisable = !(currentMaxAngle != null && currentJointWeight != null)
                             }
                             this.text = (lastElement as SegmentJoint?)?.weight.toString().let { "" }
                         }
@@ -102,6 +105,7 @@ class MainView : View("MainView") {
                             textProperty().addListener { _, _, newValue ->
                                 currentMaxAngle = newValue.toDoubleOrNull()
                                 createJointButton.isDisable = !(currentMaxAngle != null && currentJointWeight != null)
+                                updateJointButton.isDisable = !(currentMaxAngle != null && currentJointWeight != null)
                             }
                             this.text = (lastElement as SegmentJoint?)?.maxAngle.toString().let { "" }
                         }
@@ -174,13 +178,7 @@ class MainView : View("MainView") {
         for (element in chainMap) {
             if (element.key == lastElement) {
                 element.value.addClass(Styles.selected)
-                if (lastElement?.elementType == ChainElementType.SEGMENT) {
-                    createSegmentButton.isDisable = true
-                    if (currentMaxAngle != null && currentJointWeight != null) { createJointButton.isDisable = false }
-                } else {
-                    createJointButton.isDisable = true
-                    if (currentSegmentWeight != null) { createSegmentButton.isDisable = false }
-                }
+                changeButtonStatus()
             }
         }
     }
@@ -219,7 +217,7 @@ class MainView : View("MainView") {
         workArea += line
     }
 
-    private fun createSegment(weight: Double, hidden: Boolean) {
+    private fun createSegment(): ChainSegment {
         val startPoint = if (lastElement == null) {
             Point(0.0, 0.0)
         } else {
@@ -227,21 +225,31 @@ class MainView : View("MainView") {
         }
         val endPoint =
             Point(startPoint.x.plus(Random.nextDouble(10.0, 100.0)), startPoint.y.plus(Random.nextDouble(10.0, 100.0)))
-        val segment = ChainSegment(null, weight, SystemCoordinate(1337.0), endPoint, startPoint, hidden = hidden)
+        val segment = ChainSegment(null, currentSegmentWeight!!, SystemCoordinate(1337.0), endPoint, startPoint, hidden = currentSegmentIsHidden)
         createJointButton.isDisable = !(currentMaxAngle != null && currentJointWeight != null)
-        val chain = ChainControllerImpl.addChainElement(segment, lastElement).copy()
-        drawChain(chain)
+        updateJointButton.isDisable = !(currentMaxAngle != null && currentJointWeight != null)
+        return segment
     }
 
-    private fun createJoint(weight: Double, maxAngle: Double) {
+    private fun createJoint(): SegmentJoint {
         val point = if (lastElement == null) {
             Point(0.0, 0.0)
         } else {
             Point((lastElement as ChainSegment).endPoint.x, (lastElement as ChainSegment).endPoint.y)
         }
-        val joint = SegmentJoint(null, weight, SystemCoordinate(228.0), point, maxAngle, null)
+        val joint = SegmentJoint(null, currentJointWeight!!, SystemCoordinate(228.0), point, currentMaxAngle!!, null)
         createSegmentButton.isDisable = currentSegmentWeight == null
-        val chain = ChainControllerImpl.addChainElement(joint, lastElement).copy()
+        updateSegmentButton.isDisable = currentSegmentWeight == null
+        return joint
+    }
+
+    private fun addChainElement(chainElement: ChainElement) {
+        val chain = ChainControllerImpl.addChainElement(chainElement, lastElement).copy()
+        drawChain(chain)
+    }
+
+    private fun updateChainElement(chainElement: ChainElement) {
+        val chain = ChainControllerImpl.updateChainElement(chainElement.id!!, chainElement).copy()
         drawChain(chain)
     }
 
@@ -249,14 +257,6 @@ class MainView : View("MainView") {
         val chain = ChainControllerImpl.deleteChainElement(lastElement!!).copy()
         lastElement = null
         drawChain(chain)
-    }
-
-    private fun updateSegment() {
-
-    }
-
-    private fun updateJoint() {
-
     }
 
     private fun startElementDragging(evt: MouseEvent) {
@@ -306,13 +306,7 @@ class MainView : View("MainView") {
                     element.value.addClass(Styles.selected)
                     lastElement = element.key
                 }
-                if (lastElement?.elementType == ChainElementType.SEGMENT) {
-                    createSegmentButton.isDisable = true
-                    if (currentMaxAngle != null && currentJointWeight != null) { createJointButton.isDisable = false }
-                } else {
-                    createJointButton.isDisable = true
-                    if (currentSegmentWeight != null) { createSegmentButton.isDisable = false }
-                }
+                changeButtonStatus()
             }
         }
     }
@@ -336,5 +330,23 @@ class MainView : View("MainView") {
 
     private fun changeVisibility() {
         currentSegmentIsHidden = !currentSegmentIsHidden
+    }
+
+    private fun changeButtonStatus() {
+        if (lastElement?.elementType == ChainElementType.SEGMENT) {
+            createSegmentButton.isDisable = true
+            updateSegmentButton.isDisable = false
+            if (currentMaxAngle != null && currentJointWeight != null) {
+                createJointButton.isDisable = false
+                updateJointButton.isDisable = true
+            }
+        } else {
+            createJointButton.isDisable = true
+            updateJointButton.isDisable = false
+            if (currentSegmentWeight != null) {
+                createSegmentButton.isDisable = false
+                updateSegmentButton.isDisable = true
+            }
+        }
     }
 }
