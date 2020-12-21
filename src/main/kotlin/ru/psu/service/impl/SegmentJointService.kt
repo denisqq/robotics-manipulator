@@ -3,6 +3,7 @@ package ru.psu.service.impl
 import org.mapstruct.factory.Mappers
 import ru.psu.model.*
 import ru.psu.service.mapper.SegmentJointMapper
+import ru.psu.service.validator.impl.SegmentJointValidatorImpl
 
 class SegmentJointService private constructor(updateMapper: SegmentJointMapper) :
     AbstractElementService<SegmentJoint, ChainSegment, SegmentJointMapper>(
@@ -15,6 +16,7 @@ class SegmentJointService private constructor(updateMapper: SegmentJointMapper) 
             parentSegment = parentElement,
             systemCoordinate = createSystemCoordinate(element)
         )
+        SegmentJointValidatorImpl.validate(joint)
         addIndex(joint)
         parentElement?.let {
             it.childSegmentJoint = joint
@@ -22,24 +24,20 @@ class SegmentJointService private constructor(updateMapper: SegmentJointMapper) 
         return joint
     }
 
-    override fun createSystemCoordinate(element: SegmentJoint): SystemCoordinate {
-        if (element.parentSegment == null) return SystemCoordinate(0.0);
-
-        val startPoint = element.point
-        val endPoint = element.parentSegment.endPoint
-
-        return calcAngleBetweenPoints(endPoint, startPoint)
-    }
-
     override fun update(id: Long, element: SegmentJoint): SegmentJoint {
+        element.systemCoordinate = createSystemCoordinate(element)
+
+        SegmentJointValidatorImpl.validate(element)
         val segmentJoint = super.update(id, element)
 
         element.parentSegment?.let {
             it.endPoint = element.point
+            ChainSegmentServiceImpl.instance.updateWithoutUpdateChild(it.id!!, it)
         }
 
         segmentJoint.childSegments.forEach { chainSegment ->
             chainSegment.startPoint = segmentJoint.point
+            ChainSegmentServiceImpl.instance.update(chainSegment.id!!, chainSegment)
         }
 
         return segmentJoint
@@ -49,8 +47,11 @@ class SegmentJointService private constructor(updateMapper: SegmentJointMapper) 
         super.delete(element)
         element.parentSegment?.childSegmentJoint = null
 
-        element.childSegments.forEach { chainSegment ->
-            ChainSegmentService.instance.delete(chainSegment)
+        val iterator = element.childSegments.iterator()
+
+        iterator.forEach { chainSegment ->
+            iterator.remove()
+            ChainSegmentServiceImpl.instance.delete(chainSegment)
         }
     }
 
@@ -65,7 +66,7 @@ class SegmentJointService private constructor(updateMapper: SegmentJointMapper) 
         var segmentJointCenterMass = CenterMass(elementCenterMassPoint, element.weight, elementWeightPoint)
 
         element.childSegments.forEach{ chainSegment ->
-            val childElementCenterMass = ChainSegmentService.instance.calculateCenterMass(chainSegment)
+            val childElementCenterMass = ChainSegmentServiceImpl.instance.calculateCenterMass(chainSegment)
             val childElementCenterMassPoint = childElementCenterMass.point;
 
             val childXPoint = (childElementCenterMassPoint.x + segmentJointCenterMass.point.x) / 2
@@ -79,6 +80,20 @@ class SegmentJointService private constructor(updateMapper: SegmentJointMapper) 
         }
 
         return segmentJointCenterMass
+    }
+
+    override fun createSystemCoordinate(element: SegmentJoint): SystemCoordinate {
+        if (element.parentSegment == null) return SystemCoordinate(0.0);
+
+        val startPoint = element.point
+        val endPoint = element.parentSegment.endPoint
+
+        return calcAngleBetweenPoints(endPoint, startPoint)
+    }
+
+    override fun findElement(vararg point: Point): Collection<SegmentJoint> {
+        val firstPoint = point[0]
+        return index.filter { it.value.point == firstPoint}.values
     }
 
     private object HOLDER {

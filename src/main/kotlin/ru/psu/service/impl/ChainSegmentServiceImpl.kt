@@ -2,13 +2,14 @@ package ru.psu.service.impl
 
 import org.mapstruct.factory.Mappers
 import ru.psu.model.*
+import ru.psu.service.ChainSegmentService
 import ru.psu.service.mapper.ChainSegmentMapper
-import java.lang.IllegalArgumentException
+import ru.psu.service.validator.impl.ChainSegmentValidatorImpl
+import java.util.*
 
-class ChainSegmentService private constructor(updateMapper: ChainSegmentMapper) :
-    AbstractElementService<ChainSegment, SegmentJoint, ChainSegmentMapper>(
-        updateMapper
-    ) {
+class ChainSegmentServiceImpl private constructor(updateMapper: ChainSegmentMapper) : ChainSegmentService,
+    AbstractElementService<ChainSegment, SegmentJoint, ChainSegmentMapper>(updateMapper) {
+
 
     override fun createElement(element: ChainSegment, parentElement: SegmentJoint?): ChainSegment {
         val segment = element.copy(
@@ -16,6 +17,8 @@ class ChainSegmentService private constructor(updateMapper: ChainSegmentMapper) 
             parentSegmentJoint = parentElement,
             systemCoordinate = createSystemCoordinate(element)
         )
+
+        ChainSegmentValidatorImpl.validate(segment)
         addIndex(segment)
         parentElement?.let {
             parentElement.addSegment(segment)
@@ -24,17 +27,24 @@ class ChainSegmentService private constructor(updateMapper: ChainSegmentMapper) 
     }
 
     override fun update(id: Long, element: ChainSegment): ChainSegment {
-        val systemCoordinate = createSystemCoordinate(element)
-        element.parentSegmentJoint?.let {
-            if(it.maxAngle < systemCoordinate.angle) {
-                throw IllegalArgumentException("Cannot rotate element on angle = ${systemCoordinate.angle} because segment joint max angle = ${it.maxAngle}")
-            }
+        val segment = updateChainSegment(element, id)
+        segment.childSegmentJoint?.let {
+            it.point = segment.endPoint
+            SegmentJointService.instance.update(it.id!!, it)
         }
 
-        val segment = super.update(id, element)
-        segment.childSegmentJoint?.point = segment.endPoint
-
         return segment
+    }
+
+    override fun updateWithoutUpdateChild(id: Long, element: ChainSegment): ChainSegment {
+        return updateChainSegment(element, id)
+    }
+
+    private fun updateChainSegment(element: ChainSegment, id: Long): ChainSegment {
+        element.systemCoordinate = createSystemCoordinate(element)
+        ChainSegmentValidatorImpl.validate(element)
+
+        return super.update(id, element)
     }
 
     override fun delete(element: ChainSegment) {
@@ -47,11 +57,11 @@ class ChainSegmentService private constructor(updateMapper: ChainSegmentMapper) 
     }
 
     private object HOLDER {
-        val INSTANCE = ChainSegmentService(Mappers.getMapper(ChainSegmentMapper::class.java))
+        val INSTANCE = ChainSegmentServiceImpl(Mappers.getMapper(ChainSegmentMapper::class.java))
     }
 
     companion object {
-        val instance: ChainSegmentService by lazy { HOLDER.INSTANCE }
+        val instance: ChainSegmentServiceImpl by lazy { HOLDER.INSTANCE }
     }
 
     override fun createSystemCoordinate(element: ChainSegment): SystemCoordinate {
@@ -96,6 +106,19 @@ class ChainSegmentService private constructor(updateMapper: ChainSegmentMapper) 
 
             return CenterMass(elementCenterMass, element.weight, weightPoint)
         }
+    }
+
+    override fun findElement(vararg point: Point): Collection<ChainSegment> {
+//        val firstPoint = point[0]
+//        val secondPoint = point[1]
+//
+//        val x = (secondPoint.y - firstPoint.y) / (firstPoint.x - secondPoint.x)
+//        val y = firstPoint.x * x + firstPoint.y
+
+//        val point
+
+        //TODO https://rosettacode.org/wiki/Find_the_intersection_of_two_lines#Java
+        return Collections.emptyList()
     }
 
 }

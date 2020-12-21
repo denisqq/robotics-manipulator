@@ -16,7 +16,6 @@ import tornadofx.*
 import kotlin.random.Random
 
 class MainView : View("MainView") {
-    private val chainController = ChainControllerImpl()
     private var workArea: Pane by singleAssign()
     private var createSegmentButton = Button("Создать сегмент")
     private var createJointButton = Button("Создать сустав")
@@ -28,10 +27,9 @@ class MainView : View("MainView") {
         private var currentMaxAngle: Double? = null
     }
 
-
     init {
         setupButtons()
-        val chain = chainController.getChain().copy()
+        val chain = ChainControllerImpl.getChain().copy()
         chain.rootElement?.let { drawAll(it) }
     }
 
@@ -153,14 +151,12 @@ class MainView : View("MainView") {
     }
 
     private fun drawJoint(joint: SegmentJoint) {
-        val segmentJoint = joint.copy()
-        val centerPoint = segmentJoint.point
+        val centerPoint = joint.point
         val circle = Circle(centerPoint.x, centerPoint.y, 10.0)
         circle.onLeftClick {
             circle.fill = Color.BLUE
             currentElement = joint
         }
-//        currentElement = joint
         workArea += circle
     }
 
@@ -173,7 +169,6 @@ class MainView : View("MainView") {
             line.stroke = Color.BLUE
             currentElement = segment
         }
-//        currentElement = segment
         workArea += line
     }
 
@@ -188,7 +183,7 @@ class MainView : View("MainView") {
         val segment = ChainSegment(null, weight, SystemCoordinate(1337.0), endPoint, startPoint)
         createSegmentButton.isDisable = true
         createJointButton.isDisable = !(currentMaxAngle != null && currentJointWeight != null)
-        val chain = chainController.addChainElement(segment, currentElement).copy()
+        val chain = ChainControllerImpl.addChainElement(segment, currentElement).copy()
         drawChain(chain)
     }
 
@@ -201,12 +196,12 @@ class MainView : View("MainView") {
         val joint = SegmentJoint(null, weight, SystemCoordinate(228.0), point, maxAngle, null)
         createJointButton.isDisable = true
         createSegmentButton.isDisable = currentSegmentWeight == null
-        val chain = chainController.addChainElement(joint, currentElement).copy()
+        val chain = ChainControllerImpl.addChainElement(joint, currentElement).copy()
         drawChain(chain)
     }
 
     private fun deleteElement() {
-        val chain = chainController.deleteChainElement(currentElement!!).copy()
+        val chain = ChainControllerImpl.deleteChainElement(currentElement!!).copy()
         currentElement = null
         drawChain(chain)
     }
@@ -219,14 +214,14 @@ class MainView : View("MainView") {
                     val segment = currentElement as ChainSegment
                     segment.endPoint.x = mousePoint.x
                     segment.endPoint.y = mousePoint.y
-                    val chain = chainController.updateChainElement(segment.id!!, segment).copy()
+                    val chain = ChainControllerImpl.updateChainElement(segment.id!!, segment).copy()
                     drawChain(chain)
                 }
                 ChainElementType.JOINT -> {
                     val joint = currentElement as SegmentJoint
                     joint.point.x = mousePoint.x
                     joint.point.y = mousePoint.y
-                    val chain = chainController.updateChainElement(joint.id!!, joint).copy()
+                    val chain = ChainControllerImpl.updateChainElement(joint.id!!, joint).copy()
                     drawChain(chain)
                 }
             }

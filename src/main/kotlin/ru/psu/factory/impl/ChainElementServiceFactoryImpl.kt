@@ -4,7 +4,7 @@ import ru.psu.factory.ChainElementServiceFactory
 import ru.psu.model.ChainElement
 import ru.psu.model.enums.ChainElementType
 import ru.psu.service.ChainElementService
-import ru.psu.service.impl.ChainSegmentService
+import ru.psu.service.impl.ChainSegmentServiceImpl
 import ru.psu.service.impl.SegmentJointService
 
 class ChainElementServiceFactoryImpl<E : ChainElement, out S : ChainElementService<E, E>> private constructor() :
@@ -13,7 +13,7 @@ class ChainElementServiceFactoryImpl<E : ChainElement, out S : ChainElementServi
     override fun create(element: ChainElement): S {
         return when (element.elementType) {
             ChainElementType.JOINT -> SegmentJointService.instance as S
-            ChainElementType.SEGMENT -> ChainSegmentService.instance as S
+            ChainElementType.SEGMENT -> ChainSegmentServiceImpl.instance as S
         }
     }
 

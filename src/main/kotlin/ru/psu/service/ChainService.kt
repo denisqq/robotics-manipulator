@@ -14,4 +14,6 @@ interface ChainService {
     fun updateElement(id: Long, chainElement: ChainElement): Chain
 
     fun addElement(chainElement: ChainElement, rootElement: ChainElement?): Chain
+
+    fun findElement(vararg point: Point): Collection<ChainElement>
 }

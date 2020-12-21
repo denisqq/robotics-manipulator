@@ -10,7 +10,8 @@ interface ChainSegmentMapper : ElementUpdateMapper<ChainSegment> {
     @Mappings(
         Mapping(source = "hidden", target = "hidden"),
         Mapping(source = "weight", target = "weight"),
-        Mapping(source = "ephemeral", target = "ephemeral")
+        Mapping(source = "ephemeral", target = "ephemeral"),
+        Mapping(source = "systemCoordinate", target = "systemCoordinate")
     )
     override fun update(from: ChainSegment, @MappingTarget to: ChainSegment)
 }
