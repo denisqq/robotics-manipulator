@@ -12,6 +12,7 @@ import javafx.scene.shape.Shape
 import javafx.stage.FileChooser
 import ru.psu.controller.impl.ChainControllerImpl
 import ru.psu.controller.impl.FileControllerImpl
+import ru.psu.controller.impl.IntersectControllerImpl
 import ru.psu.model.*
 import ru.psu.model.enums.ChainElementType
 import ru.psu.styles.Styles
@@ -32,8 +33,10 @@ class MainView : View("MainView") {
 
         private var selectedElement: ChainElement? = null
         private var selectedShape: Shape? = null
-        private var lastElement: ChainElement? = null
+        var selectedOffset: Point2D? = null
+        private var currentElement: ChainElement? = null
 
+        private var currentSegmentIsEphemeral = false
         private var currentSegmentIsHidden = false
         private var currentSegmentWeight: Double? = null
         private var currentJointWeight: Double? = null
@@ -73,6 +76,7 @@ class MainView : View("MainView") {
         }
         right {
             form {
+                spacing = 10.0
                 fieldset("Сегмент") {
                     field("Вес:") {
                         textfield {
@@ -81,16 +85,24 @@ class MainView : View("MainView") {
                                 createSegmentButton.isDisable = currentSegmentWeight == null
                                 updateSegmentButton.isDisable = currentSegmentWeight == null
                             }
-                            this.text = (lastElement as ChainSegment?)?.weight.toString().let { "" }
+                            this.text = (currentElement as ChainSegment?)?.weight.toString().let { "" }
                         }
                     }
-                    checkbox("Невидимый сегмент?") {
-                        this.isSelected = currentSegmentIsHidden
-                        action { changeVisibility() }
+                    hbox(spacing = 50.0, alignment = Pos.CENTER) {
+                        checkbox("Невидимый сегмент?") {
+                            this.isSelected = currentSegmentIsHidden
+                            action { changeVisibility() }
+                        }
+                        checkbox("Эфемерный сегмент?") {
+                            this.isSelected = currentSegmentIsEphemeral
+                            action { changeEphemerality() }
+                        }
+                        paddingAll = 10.0
                     }
                     hbox(spacing = 50.0, alignment = Pos.CENTER) {
                         this.addChildIfPossible(createSegmentButton)
                         this.addChildIfPossible(updateSegmentButton)
+                        paddingAll = 10.0
                     }
                 }
                 fieldset("Сустав") {
@@ -101,7 +113,7 @@ class MainView : View("MainView") {
                                 createJointButton.isDisable = !(currentMaxAngle != null && currentJointWeight != null)
                                 updateJointButton.isDisable = !(currentMaxAngle != null && currentJointWeight != null)
                             }
-                            this.text = (lastElement as SegmentJoint?)?.weight.toString().let { "" }
+                            this.text = (currentElement as SegmentJoint?)?.weight.toString().let { "" }
                         }
                     }
                     field("Максимальный угол:") {
@@ -111,43 +123,54 @@ class MainView : View("MainView") {
                                 createJointButton.isDisable = !(currentMaxAngle != null && currentJointWeight != null)
                                 updateJointButton.isDisable = !(currentMaxAngle != null && currentJointWeight != null)
                             }
-                            this.text = (lastElement as SegmentJoint?)?.maxAngle.toString().let { "" }
+                            this.text = (currentElement as SegmentJoint?)?.maxAngle.toString().let { "" }
                         }
                     }
                     hbox(spacing = 50.0, alignment = Pos.CENTER) {
                         this.addChildIfPossible(createJointButton)
                         this.addChildIfPossible(updateJointButton)
+                        paddingAll = 10.0
                     }
                 }
                 fieldset("Центр масс") {
+                    spacing = 10.0
                     label(centerMass)
-                    button("Рассчитать центр масс цепи") { action {
-                            centerMass.value = "${ChainControllerImpl.calculateCenterMass()}"
+                    hbox(spacing = 50.0, alignment = Pos.CENTER) {
+                        button("Рассчитать центр масс цепи") {
+                            action {
+                                centerMass.value = "${ChainControllerImpl.calculateCenterMass()}"
+                            }
+                        }
+                        button("Удалить выбраный элемент") {
+                            action { deleteElement() }
                         }
                     }
                 }
-                button("Удалить") {
-                    action { deleteElement() }
-                }
-                button("Экспортировать") {
-                    action {
-                        val dir = chooseDirectory("Выберите директорию")
-                        FileControllerImpl.exportChain(dir!!)
-                    }
-                }
+                fieldset("Импорт/Экспорт") {
+                    hbox(spacing = 50.0, alignment = Pos.CENTER) {
+                        paddingAll = 10.0
+                        button("Экспортировать") {
+                            action {
+                                val dir = chooseDirectory("Выберите директорию")
+                                FileControllerImpl.exportChain(dir!!)
+                            }
+                        }
 
-                button("Импортировать") {
-                    action {
-                        val files = chooseFile(
-                            title = "Выберите дамп",
-                            filters = arrayOf(FileChooser.ExtensionFilter("JSON", "*.json")),
-                            null
-                        )
-                        val file = files[0]
-                        FileControllerImpl.importChain(file)
+                        button("Импортировать") {
+                            action {
+                                val files = chooseFile(
+                                    title = "Выберите дамп",
+                                    filters = arrayOf(FileChooser.ExtensionFilter("JSON", "*.json")),
+                                    null
+                                )
+                                val file = files[0]
+                                FileControllerImpl.importChain(file)
+                            }
+                        }
                     }
                 }
             }
+            paddingAll = 10.0
         }
         bottom {
             label(elementInfo) { paddingAll = 2.0 }
@@ -174,7 +197,7 @@ class MainView : View("MainView") {
             }
         }
         for (element in chainMap) {
-            if (element.key == lastElement) {
+            if (element.key == currentElement) {
                 element.value.addClass(Styles.selected)
                 changeButtonStatus()
             }
@@ -189,21 +212,21 @@ class MainView : View("MainView") {
         val endPoint = chainSegment.endPoint
         val line = Line(startPoint.x, startPoint.y, endPoint.x, endPoint.y)
         line.strokeWidth = 5.0
-        if (lastElement == null || lastElement == chainSegment.parentSegmentJoint) {
+        if (currentElement == null || currentElement == chainSegment.parentSegmentJoint) {
             removeBlueColor()
             if (chainSegment.parentSegmentJoint != null) {
                 var prevId: Long = -1
                 for (segment in chainSegment.parentSegmentJoint!!.childSegments) {
                     val id = segment.id!!
                     if (id > prevId) {
-                        lastElement = segment
-                        addElementInfo(lastElement as ChainSegment)
+                        currentElement = segment
+                        addElementInfo(currentElement as ChainSegment)
                     }
                     prevId = id
                 }
             } else {
-                lastElement = chainSegment
-                addElementInfo(lastElement as ChainSegment)
+                currentElement = chainSegment
+                addElementInfo(currentElement as ChainSegment)
             }
         }
         chainMap[chainSegment] = line
@@ -213,10 +236,10 @@ class MainView : View("MainView") {
     private fun drawJoint(joint: SegmentJoint) {
         val centerPoint = joint.point
         val circle = Circle(centerPoint.x, centerPoint.y, 10.0)
-        if (lastElement == null || lastElement == joint.parentSegment) {
+        if (currentElement == null || currentElement == joint.parentSegment) {
             removeBlueColor()
-            lastElement = joint
-            addElementInfo(lastElement as SegmentJoint)
+            currentElement = joint
+            addElementInfo(currentElement as SegmentJoint)
         }
         chainMap[joint] = circle
         workArea += circle
@@ -225,13 +248,13 @@ class MainView : View("MainView") {
     private fun createSegment(): ChainSegment {
         var startPoint = Point(0.0, 0.0)
         var endPoint = Point(0.0, 0.0)
-        when (lastElement?.elementType) {
+        when (currentElement?.elementType) {
             ChainElementType.SEGMENT -> {
-                startPoint = (lastElement as ChainSegment).startPoint
-                endPoint = (lastElement as ChainSegment).endPoint
+                startPoint = (currentElement as ChainSegment).startPoint
+                endPoint = (currentElement as ChainSegment).endPoint
             }
             ChainElementType.JOINT -> {
-                startPoint = (lastElement as SegmentJoint).point
+                startPoint = (currentElement as SegmentJoint).point
                 endPoint = Point(
                     startPoint.x.plus(Random.nextDouble(10.0, 100.0)),
                     startPoint.y.plus(Random.nextDouble(10.0, 100.0))
@@ -248,7 +271,8 @@ class MainView : View("MainView") {
             SystemCoordinate(1337.0),
             endPoint,
             startPoint,
-            hidden = currentSegmentIsHidden
+            hidden = currentSegmentIsHidden,
+            ephemeral = currentSegmentIsEphemeral
         )
         createJointButton.isDisable = !(currentMaxAngle != null && currentJointWeight != null)
         updateJointButton.isDisable = !(currentMaxAngle != null && currentJointWeight != null)
@@ -256,12 +280,12 @@ class MainView : View("MainView") {
     }
 
     private fun createJoint(): SegmentJoint {
-        val point = when (lastElement?.elementType) {
+        val point = when (currentElement?.elementType) {
             ChainElementType.SEGMENT -> {
-                (lastElement as ChainSegment).endPoint
+                (currentElement as ChainSegment).endPoint
             }
             ChainElementType.JOINT -> {
-                (lastElement as SegmentJoint).point
+                (currentElement as SegmentJoint).point
             }
             null -> {
                 Point(10.0, 10.0)
@@ -274,19 +298,19 @@ class MainView : View("MainView") {
     }
 
     private fun addChainElement(chainElement: ChainElement) {
-        val chain = ChainControllerImpl.addChainElement(chainElement, lastElement).copy()
+        val chain = ChainControllerImpl.addChainElement(chainElement, currentElement).copy()
         drawChain(chain)
     }
 
     private fun updateChainElement(chainElement: ChainElement) {
         addElementInfo(chainElement)
-        val chain = ChainControllerImpl.updateChainElement(lastElement!!.id!!, chainElement).copy()
+        val chain = ChainControllerImpl.updateChainElement(currentElement!!.id!!, chainElement).copy()
         drawChain(chain)
     }
 
     private fun deleteElement() {
-        val chain = ChainControllerImpl.deleteChainElement(lastElement!!).copy()
-        lastElement = null
+        val chain = ChainControllerImpl.deleteChainElement(currentElement!!).copy()
+        currentElement = null
         drawChain(chain)
     }
 
@@ -297,6 +321,13 @@ class MainView : View("MainView") {
         }.apply {
             if (this != null) {
                 selectElement(this)
+                val mp = this.parent.sceneToLocal(evt.sceneX, evt.sceneY)
+                val vizBounds = this.boundsInParent
+
+                selectedOffset = Point2D(
+                    mp.x - vizBounds.minX - (vizBounds.width - this.boundsInLocal.width) / 2,
+                    mp.y - vizBounds.minY - (vizBounds.height - this.boundsInLocal.height) / 2
+                )
             }
         }
     }
@@ -322,6 +353,7 @@ class MainView : View("MainView") {
                     drawChain(chain)
                 }
             }
+            checkIntersect(Point(mousePoint.x, mousePoint.y))
         }
     }
 
@@ -337,8 +369,8 @@ class MainView : View("MainView") {
                 if (element.value.contains(mousePt)) {
                     removeBlueColor()
                     element.value.addClass(Styles.selected)
-                    lastElement = element.key
-                    addElementInfo(lastElement!!)
+                    currentElement = element.key
+                    addElementInfo(currentElement!!)
                 }
                 changeButtonStatus()
             }
@@ -366,8 +398,12 @@ class MainView : View("MainView") {
         currentSegmentIsHidden = !currentSegmentIsHidden
     }
 
+    private fun changeEphemerality() {
+        currentSegmentIsEphemeral = !currentSegmentIsEphemeral
+    }
+
     private fun changeButtonStatus() {
-        if (lastElement?.elementType == ChainElementType.SEGMENT) {
+        if (currentElement?.elementType == ChainElementType.SEGMENT) {
             createSegmentButton.isDisable = true
             updateSegmentButton.isDisable = false
             if (currentMaxAngle != null && currentJointWeight != null) {
@@ -408,6 +444,15 @@ class MainView : View("MainView") {
             "Да"
         } else {
             "Нет"
+        }
+    }
+
+    private fun checkIntersect(mousePoint: Point) {
+        if (mousePoint.x - selectedOffset!!.x == 10.0 || mousePoint.y - selectedOffset!!.y == 10.0) {
+            val intersectionElement = IntersectControllerImpl.findIntersect(mousePoint)
+            for (element in intersectionElement) {
+                chainMap[element]?.addClass(Styles.intersection)
+            }
         }
     }
 }
