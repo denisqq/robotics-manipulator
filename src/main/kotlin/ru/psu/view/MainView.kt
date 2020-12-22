@@ -8,8 +8,8 @@ import javafx.scene.input.MouseEvent
 import javafx.scene.layout.Pane
 import javafx.scene.shape.Circle
 import javafx.scene.shape.Line
-import javafx.stage.FileChooser
 import javafx.scene.shape.Shape
+import javafx.stage.FileChooser
 import ru.psu.controller.impl.ChainControllerImpl
 import ru.psu.controller.impl.FileControllerImpl
 import ru.psu.model.*
@@ -130,7 +130,11 @@ class MainView : View("MainView") {
 
                 button("Импортировать") {
                     action {
-                        val files = chooseFile(title = "Выберите дамп", filters = arrayOf(FileChooser.ExtensionFilter("JSON", "*.json")), null)
+                        val files = chooseFile(
+                            title = "Выберите дамп",
+                            filters = arrayOf(FileChooser.ExtensionFilter("JSON", "*.json")),
+                            null
+                        )
                         val file = files[0]
                         FileControllerImpl.importChain(file)
                     }
@@ -139,38 +143,6 @@ class MainView : View("MainView") {
         }
         bottom {
             label(elementInfo) { paddingAll = 2.0 }
-//            hbox {
-//                when (lastElement?.elementType) {
-//                    ChainElementType.SEGMENT -> {
-//                        field("Координаты начала:", Orientation.VERTICAL) {
-//                            text("X") {
-//                                this.text = (lastElement as ChainSegment?)?.startPoint?.x.toString()
-//                            }
-//                            text("Y") {
-//                                this.text = (lastElement as ChainSegment?)?.startPoint?.x.toString()
-//                            }
-//                        }
-//                        field("Координаты конца:", Orientation.VERTICAL) {
-//                            text("X") {
-//                                this.text = (lastElement as ChainSegment?)?.endPoint?.x.toString()
-//                            }
-//                            text("Y") {
-//                                this.text = (lastElement as ChainSegment?)?.endPoint?.y.toString()
-//                            }
-//                        }
-//                    }
-//                    ChainElementType.JOINT -> {
-//                        field("Координаты центра:", Orientation.VERTICAL) {
-//                            text("X") {
-//                                this.text = (lastElement as SegmentJoint?)?.point?.x.toString()
-//                            }
-//                            text("Y") {
-//                                this.text = (lastElement as SegmentJoint?)?.point?.y.toString()
-//                            }
-//                        }
-//                    }
-//                }
-//            }
         }
     }
 
@@ -201,20 +173,10 @@ class MainView : View("MainView") {
         }
     }
 
-    private fun drawJoint(joint: SegmentJoint) {
-        val centerPoint = joint.point
-        val circle = Circle(centerPoint.x, centerPoint.y, 10.0)
-        if (lastElement == null || lastElement == joint.parentSegment) {
-            removeBlueColor()
-            lastElement = joint
-            addElementInfo(lastElement as SegmentJoint)
-        }
-        chainMap[joint] = circle
-        workArea += circle
-    }
-
     private fun drawSegment(chainSegment: ChainSegment) {
-        if (chainSegment.hidden) { return }
+        if (chainSegment.hidden) {
+            return
+        }
         val startPoint = chainSegment.startPoint
         val endPoint = chainSegment.endPoint
         val line = Line(startPoint.x, startPoint.y, endPoint.x, endPoint.y)
@@ -229,10 +191,10 @@ class MainView : View("MainView") {
                         lastElement = segment
                         addElementInfo(lastElement as ChainSegment)
                     }
-                     prevId = id
+                    prevId = id
                 }
             } else {
-                lastElement =  chainSegment
+                lastElement = chainSegment
                 addElementInfo(lastElement as ChainSegment)
             }
         }
@@ -240,25 +202,62 @@ class MainView : View("MainView") {
         workArea += line
     }
 
-    private fun createSegment(): ChainSegment {
-        val startPoint = if (lastElement == null) {
-            Point(0.0, 0.0)
-        } else {
-            Point((lastElement as SegmentJoint).point.x, (lastElement as SegmentJoint).point.y)
+    private fun drawJoint(joint: SegmentJoint) {
+        val centerPoint = joint.point
+        val circle = Circle(centerPoint.x, centerPoint.y, 10.0)
+        if (lastElement == null || lastElement == joint.parentSegment) {
+            removeBlueColor()
+            lastElement = joint
+            addElementInfo(lastElement as SegmentJoint)
         }
-        val endPoint =
-            Point(startPoint.x.plus(Random.nextDouble(10.0, 100.0)), startPoint.y.plus(Random.nextDouble(10.0, 100.0)))
-        val segment = ChainSegment(null, currentSegmentWeight!!, SystemCoordinate(1337.0), endPoint, startPoint, hidden = currentSegmentIsHidden)
+        chainMap[joint] = circle
+        workArea += circle
+    }
+
+    private fun createSegment(): ChainSegment {
+        var startPoint = Point(0.0, 0.0)
+        var endPoint = Point(0.0, 0.0)
+        when (lastElement?.elementType) {
+            ChainElementType.SEGMENT -> {
+                startPoint = (lastElement as ChainSegment).startPoint
+                endPoint = (lastElement as ChainSegment).endPoint
+            }
+            ChainElementType.JOINT -> {
+                startPoint = (lastElement as SegmentJoint).point
+                endPoint = Point(
+                    startPoint.x.plus(Random.nextDouble(10.0, 100.0)),
+                    startPoint.y.plus(Random.nextDouble(10.0, 100.0))
+                )
+            }
+            null -> {
+                startPoint = Point(10.0, 10.0)
+                endPoint = Point(50.0, 50.0)
+            }
+        }
+        val segment = ChainSegment(
+            null,
+            currentSegmentWeight!!,
+            SystemCoordinate(1337.0),
+            endPoint,
+            startPoint,
+            hidden = currentSegmentIsHidden
+        )
         createJointButton.isDisable = !(currentMaxAngle != null && currentJointWeight != null)
         updateJointButton.isDisable = !(currentMaxAngle != null && currentJointWeight != null)
         return segment
     }
 
     private fun createJoint(): SegmentJoint {
-        val point = if (lastElement == null) {
-            Point(0.0, 0.0)
-        } else {
-            Point((lastElement as ChainSegment).endPoint.x, (lastElement as ChainSegment).endPoint.y)
+        val point = when (lastElement?.elementType) {
+            ChainElementType.SEGMENT -> {
+                (lastElement as ChainSegment).endPoint
+            }
+            ChainElementType.JOINT -> {
+                (lastElement as SegmentJoint).point
+            }
+            null -> {
+                Point(10.0, 10.0)
+            }
         }
         val joint = SegmentJoint(null, currentJointWeight!!, SystemCoordinate(228.0), point, currentMaxAngle!!, null)
         createSegmentButton.isDisable = currentSegmentWeight == null
@@ -272,7 +271,7 @@ class MainView : View("MainView") {
     }
 
     private fun updateChainElement(chainElement: ChainElement) {
-        val chain = ChainControllerImpl.updateChainElement(chainElement.id!!, chainElement).copy()
+        val chain = ChainControllerImpl.updateChainElement(lastElement!!.id!!, chainElement).copy()
         drawChain(chain)
     }
 
@@ -288,7 +287,7 @@ class MainView : View("MainView") {
             it.contains(mousePt)
         }.apply {
             if (this != null) {
-                    selectElement(this)
+                selectElement(this)
             }
         }
     }
@@ -323,7 +322,7 @@ class MainView : View("MainView") {
     private fun chooseElement(evt: MouseEvent) {
         if (evt.clickCount == 2) {
             for (element in chainMap) {
-            val mousePt: Point2D = element.value.sceneToLocal(evt.sceneX, evt.sceneY)
+                val mousePt: Point2D = element.value.sceneToLocal(evt.sceneX, evt.sceneY)
                 if (element.value.contains(mousePt)) {
                     removeBlueColor()
                     element.value.addClass(Styles.selected)
@@ -379,12 +378,16 @@ class MainView : View("MainView") {
             ChainElementType.SEGMENT -> {
                 chainElement as ChainSegment
 
-                elementInfo.value = "Начало: (${chainElement.startPoint.x}, ${chainElement.startPoint.y}), Конец: (${chainElement.endPoint.x}, ${chainElement.endPoint.y}), Вес: ${chainElement.weight}, Эфимерный: ${createYesString(chainElement.ephemeral)}, Скрытый: ${createYesString(chainElement.hidden)}"
+                elementInfo.value =
+                    "Начало: (${chainElement.startPoint.x}, ${chainElement.startPoint.y}), Конец: (${chainElement.endPoint.x}, ${chainElement.endPoint.y}), Вес: ${chainElement.weight}, Эфимерный: ${
+                        createYesString(chainElement.ephemeral)
+                    }, Скрытый: ${createYesString(chainElement.hidden)}"
             }
             ChainElementType.JOINT -> {
                 chainElement as SegmentJoint
 
-                elementInfo.value = "Центр: (${chainElement.point.x}, ${chainElement.point.y}), Вес: ${chainElement.weight}, Максимальный угол: ${chainElement.maxAngle}"
+                elementInfo.value =
+                    "Центр: (${chainElement.point.x}, ${chainElement.point.y}), Вес: ${chainElement.weight}, Максимальный угол: ${chainElement.maxAngle}"
             }
         }
     }
