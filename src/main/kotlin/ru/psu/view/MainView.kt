@@ -25,6 +25,7 @@ class MainView : View("MainView") {
     private var updateSegmentButton = Button("Изменить сегмент")
     private var updateJointButton = Button("Изменить сустав")
     private var elementInfo = SimpleStringProperty("Тут будет показана основная информация об объекте")
+    private var centerMass = SimpleStringProperty("Для расчета центра масс всей цепи нажмите на эту кнопку")
 
     companion object {
         private var chainMap: MutableMap<ChainElement, Shape> = HashMap()
@@ -59,7 +60,7 @@ class MainView : View("MainView") {
 
     @Suppress("DuplicatedCode")
     override val root = borderpane {
-        setPrefSize(1280.0, 1024.0)
+        setPrefSize(Double.MAX_VALUE, 1024.0)
         left {
             workArea = pane {
                 addEventFilter(MouseEvent.MOUSE_CLICKED, ::chooseElement)
@@ -116,6 +117,13 @@ class MainView : View("MainView") {
                     hbox(spacing = 50.0, alignment = Pos.CENTER) {
                         this.addChildIfPossible(createJointButton)
                         this.addChildIfPossible(updateJointButton)
+                    }
+                }
+                fieldset("Центр масс") {
+                    label(centerMass)
+                    button("Рассчитать центр масс цепи") { action {
+                            centerMass.value = "${ChainControllerImpl.calculateCenterMass()}"
+                        }
                     }
                 }
                 button("Удалить") {
@@ -271,6 +279,7 @@ class MainView : View("MainView") {
     }
 
     private fun updateChainElement(chainElement: ChainElement) {
+        addElementInfo(chainElement)
         val chain = ChainControllerImpl.updateChainElement(lastElement!!.id!!, chainElement).copy()
         drawChain(chain)
     }
@@ -300,6 +309,7 @@ class MainView : View("MainView") {
                     val segment = selectedElement as ChainSegment
                     segment.endPoint.x = mousePoint.x
                     segment.endPoint.y = mousePoint.y
+                    addElementInfo(segment)
                     val chain = ChainControllerImpl.updateChainElement(segment.id!!, segment).copy()
                     drawChain(chain)
                 }
@@ -307,6 +317,7 @@ class MainView : View("MainView") {
                     val joint = selectedElement as SegmentJoint
                     joint.point.x = mousePoint.x
                     joint.point.y = mousePoint.y
+                    addElementInfo(joint)
                     val chain = ChainControllerImpl.updateChainElement(joint.id!!, joint).copy()
                     drawChain(chain)
                 }
