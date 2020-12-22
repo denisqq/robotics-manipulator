@@ -1,6 +1,6 @@
 package ru.psu.view
 
-import javafx.geometry.Orientation
+import javafx.beans.property.SimpleStringProperty
 import javafx.geometry.Point2D
 import javafx.geometry.Pos
 import javafx.scene.control.Button
@@ -24,6 +24,7 @@ class MainView : View("MainView") {
     private var createJointButton = Button("Создать сустав")
     private var updateSegmentButton = Button("Изменить сегмент")
     private var updateJointButton = Button("Изменить сустав")
+    private var elementInfo = SimpleStringProperty("Тут будет показана основная информация об объекте")
 
     companion object {
         private var chainMap: MutableMap<ChainElement, Shape> = HashMap()
@@ -117,47 +118,13 @@ class MainView : View("MainView") {
                         this.addChildIfPossible(updateJointButton)
                     }
                 }
-            }
-        }
-        bottom {
-            hbox {
-                when (lastElement?.elementType) {
-                    ChainElementType.SEGMENT -> {
-                        field("Координаты начала:", Orientation.VERTICAL) {
-                            text("X") {
-                                this.text = (lastElement as ChainSegment?)?.startPoint?.x.toString()
-                            }
-                            text("Y") {
-                                this.text = (lastElement as ChainSegment?)?.startPoint?.x.toString()
-                            }
-                        }
-                        field("Координаты конца:", Orientation.VERTICAL) {
-                            text("X") {
-                                this.text = (lastElement as ChainSegment?)?.endPoint?.x.toString()
-                            }
-                            text("Y") {
-                                this.text = (lastElement as ChainSegment?)?.endPoint?.y.toString()
-                            }
-                        }
-                    }
-                    ChainElementType.JOINT -> {
-                        field("Координаты центра:", Orientation.VERTICAL) {
-                            text("X") {
-                                this.text = (lastElement as SegmentJoint?)?.point?.x.toString()
-                            }
-                            text("Y") {
-                                this.text = (lastElement as SegmentJoint?)?.point?.y.toString()
-                            }
-                        }
-                    }
-                }
                 button("Удалить") {
                     action { deleteElement() }
                 }
                 button("Экспортировать") {
                     action {
                         val dir = chooseDirectory("Выберите директорию")
-                        FileControllerImpl.exportChain(dir!!);
+                        FileControllerImpl.exportChain(dir!!)
                     }
                 }
 
@@ -169,6 +136,41 @@ class MainView : View("MainView") {
                     }
                 }
             }
+        }
+        bottom {
+            label(elementInfo) { paddingAll = 2.0 }
+//            hbox {
+//                when (lastElement?.elementType) {
+//                    ChainElementType.SEGMENT -> {
+//                        field("Координаты начала:", Orientation.VERTICAL) {
+//                            text("X") {
+//                                this.text = (lastElement as ChainSegment?)?.startPoint?.x.toString()
+//                            }
+//                            text("Y") {
+//                                this.text = (lastElement as ChainSegment?)?.startPoint?.x.toString()
+//                            }
+//                        }
+//                        field("Координаты конца:", Orientation.VERTICAL) {
+//                            text("X") {
+//                                this.text = (lastElement as ChainSegment?)?.endPoint?.x.toString()
+//                            }
+//                            text("Y") {
+//                                this.text = (lastElement as ChainSegment?)?.endPoint?.y.toString()
+//                            }
+//                        }
+//                    }
+//                    ChainElementType.JOINT -> {
+//                        field("Координаты центра:", Orientation.VERTICAL) {
+//                            text("X") {
+//                                this.text = (lastElement as SegmentJoint?)?.point?.x.toString()
+//                            }
+//                            text("Y") {
+//                                this.text = (lastElement as SegmentJoint?)?.point?.y.toString()
+//                            }
+//                        }
+//                    }
+//                }
+//            }
         }
     }
 
@@ -205,6 +207,7 @@ class MainView : View("MainView") {
         if (lastElement == null || lastElement == joint.parentSegment) {
             removeBlueColor()
             lastElement = joint
+            addElementInfo(lastElement as SegmentJoint)
         }
         chainMap[joint] = circle
         workArea += circle
@@ -222,11 +225,15 @@ class MainView : View("MainView") {
                 var prevId: Long = -1
                 for (segment in chainSegment.parentSegmentJoint!!.childSegments) {
                     val id = segment.id!!
-                    if (id > prevId) { lastElement = segment }
+                    if (id > prevId) {
+                        lastElement = segment
+                        addElementInfo(lastElement as ChainSegment)
+                    }
                      prevId = id
                 }
             } else {
                 lastElement =  chainSegment
+                addElementInfo(lastElement as ChainSegment)
             }
         }
         chainMap[chainSegment] = line
@@ -321,6 +328,7 @@ class MainView : View("MainView") {
                     removeBlueColor()
                     element.value.addClass(Styles.selected)
                     lastElement = element.key
+                    addElementInfo(lastElement!!)
                 }
                 changeButtonStatus()
             }
@@ -363,6 +371,29 @@ class MainView : View("MainView") {
                 createSegmentButton.isDisable = false
                 updateSegmentButton.isDisable = true
             }
+        }
+    }
+
+    private fun addElementInfo(chainElement: ChainElement) {
+        when (chainElement.elementType) {
+            ChainElementType.SEGMENT -> {
+                chainElement as ChainSegment
+
+                elementInfo.value = "Начало: (${chainElement.startPoint.x}, ${chainElement.startPoint.y}), Конец: (${chainElement.endPoint.x}, ${chainElement.endPoint.y}), Вес: ${chainElement.weight}, Эфимерный: ${createYesString(chainElement.ephemeral)}, Скрытый: ${createYesString(chainElement.hidden)}"
+            }
+            ChainElementType.JOINT -> {
+                chainElement as SegmentJoint
+
+                elementInfo.value = "Центр: (${chainElement.point.x}, ${chainElement.point.y}), Вес: ${chainElement.weight}, Максимальный угол: ${chainElement.maxAngle}"
+            }
+        }
+    }
+
+    private fun createYesString(boolean: Boolean): String {
+        return if (boolean) {
+            "Да"
+        } else {
+            "Нет"
         }
     }
 }
