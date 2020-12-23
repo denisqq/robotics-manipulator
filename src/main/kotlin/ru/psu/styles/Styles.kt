@@ -8,6 +8,8 @@ class Styles : Stylesheet() {
     companion object {
         val heading by cssclass()
         val selected by cssclass()
+        val intersection by cssclass()
+        val centerMass by cssclass()
     }
 
     init {
@@ -20,6 +22,15 @@ class Styles : Stylesheet() {
         selected {
             fill = Color.BLUE
             stroke = Color.BLUE
+        }
+
+        intersection {
+            fill = Color.RED
+            stroke = Color.RED
+        }
+
+        centerMass {
+            fill = Color.GREEN
         }
     }
 }
