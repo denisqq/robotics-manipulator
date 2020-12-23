@@ -9,6 +9,7 @@ class Styles : Stylesheet() {
         val heading by cssclass()
         val selected by cssclass()
         val intersection by cssclass()
+        val centerMass by cssclass()
     }
 
     init {
@@ -26,6 +27,10 @@ class Styles : Stylesheet() {
         intersection {
             fill = Color.RED
             stroke = Color.RED
+        }
+
+        centerMass {
+            fill = Color.GREEN
         }
     }
 }

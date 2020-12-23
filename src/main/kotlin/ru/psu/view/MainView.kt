@@ -33,8 +33,9 @@ class MainView : View("MainView") {
 
         private var selectedElement: ChainElement? = null
         private var selectedShape: Shape? = null
-        var selectedOffset: Point2D? = null
+        private var selectedOffset: Point2D? = null
         private var currentElement: ChainElement? = null
+        private var centerMassPoint: Point? = null
 
         private var currentSegmentIsEphemeral = false
         private var currentSegmentIsHidden = false
@@ -138,11 +139,11 @@ class MainView : View("MainView") {
                     hbox(spacing = 50.0, alignment = Pos.CENTER) {
                         button("Рассчитать центр масс цепи") {
                             action {
-                                centerMass.value = "${ChainControllerImpl.calculateCenterMass()}"
+                                centerMassPoint = ChainControllerImpl.calculateCenterMass()
+                                centerMassPoint?.let { drawCenterMass(it) }
+                                centerMass.value =
+                                    "X: ${centerMassPoint?.x}, Y: ${centerMassPoint?.y}"
                             }
-                        }
-                        button("Удалить выбраный элемент") {
-                            action { deleteElement() }
                         }
                     }
                 }
@@ -173,7 +174,12 @@ class MainView : View("MainView") {
             paddingAll = 10.0
         }
         bottom {
-            label(elementInfo) { paddingAll = 2.0 }
+            hbox(10.0, Pos.BASELINE_LEFT) {
+                button("Удалить выбраный элемент") {
+                    action { deleteElement() }
+                }
+                label(elementInfo) { }
+            }
         }
     }
 
@@ -242,6 +248,13 @@ class MainView : View("MainView") {
             addElementInfo(currentElement as SegmentJoint)
         }
         chainMap[joint] = circle
+        workArea += circle
+    }
+
+    private fun drawCenterMass(point: Point) {
+        workArea.removeClass(Styles.centerMass)
+        val circle = Circle(point.x, point.y, 15.0)
+        circle.addClass(Styles.centerMass)
         workArea += circle
     }
 
